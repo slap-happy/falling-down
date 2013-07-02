@@ -6,7 +6,9 @@ public class TrackingCamera : MonoBehaviour {
 	public Transform target;
 
 	// Update is called once per frame
-	void Update () {
-		transform.position.Set(transform.position.x, target.position.y, transform.position.z);
+	void LateUpdate () {
+		Vector3 new_pos = transform.position;
+		new_pos.y = target.position.y;
+		transform.position = new_pos;
 	}
 }
