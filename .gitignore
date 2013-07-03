@@ -2,7 +2,9 @@ Temp/
 Library/
 obj/
 *.svd
- 
+*.sln
+*.userprefs
+*.pidb 
 /Project/Project.userprefs
 /Project/Assembly-CSharp.csproj
 /Project/Assembly-CSharp.pidb
