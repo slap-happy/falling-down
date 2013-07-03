@@ -4,7 +4,9 @@ obj/
 *.svd
 *.sln
 *.userprefs
-*.pidb 
+*.pidb
+*.csproj
+*.unityproj
 /Project/Project.userprefs
 /Project/Assembly-CSharp.csproj
 /Project/Assembly-CSharp.pidb
