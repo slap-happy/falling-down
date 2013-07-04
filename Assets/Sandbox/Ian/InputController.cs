@@ -16,6 +16,11 @@ public struct Inputs
 		}
 	}
 	
+	public Vector3 DeltaForce
+	{
+		get { return new Vector3 (accelerationValue.x, accelerationValue.y, 0); }
+	}
+	
 	public bool Attack
 	{ 
 		get
