@@ -76,6 +76,9 @@ public class InputController : MonoBehaviour
 	void Awake()
 	{
 		input = new Inputs();
+		Screen.showCursor = false;
+		centerOfScreen = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0);
+		Debug.Log(centerOfScreen);
 	}
 	
 	void Update()
@@ -86,7 +89,7 @@ public class InputController : MonoBehaviour
 		input.DeltaAcceleration *= Time.deltaTime * inputMultiplier;
 		if (input.HasChanged && OnInput != null)
 		{
-			OnInput(input);
+			OnInput(NormalizedInput);
 			input.Refresh();
 		}
 			
@@ -95,10 +98,17 @@ public class InputController : MonoBehaviour
 	
 	#region Private
 	private Inputs input;
+	private Vector3 centerOfScreen;
 	
 	void PollMouse(ref Inputs input)
 	{
-		
+		Vector3 position = Input.mousePosition - centerOfScreen;
+		if (position.x != centerOfScreen.x)
+		{
+			Debug.Log(position);
+			position.y = 0;
+			input.DeltaAcceleration = position;
+		}
 	}
 	
 	void PollTouches(ref Inputs input)
@@ -120,8 +130,6 @@ public class InputController : MonoBehaviour
 						touchOneDelta.x - touchTwoDelta.x) * (firstFingerOnLeft ? -1 : 1);
 				break;
 			}
-			newDeltaAcceleration.x = Mathf.Clamp(newDeltaAcceleration.x, -maxHorizontalMovement, maxHorizontalMovement);
-			newDeltaAcceleration.y = Mathf.Clamp(newDeltaAcceleration.y, -maxVerticalMovement, maxVerticalMovement);
 			input.DeltaAcceleration = newDeltaAcceleration;
 		}
 	}
@@ -131,14 +139,26 @@ public class InputController : MonoBehaviour
 		input.DeltaAcceleration += new Vector2(Input.GetAxis("Horizontal") * maxHorizontalMovement, Input.GetAxis("Vertical") * maxVerticalMovement);
 		input.Attack = Input.GetButton("Fire1");
 	}
+	
+	Inputs NormalizedInput
+	{
+		get
+		{
+			Vector2 newInput = input.DeltaAcceleration;
+			newInput.x = Mathf.Clamp(newInput.x, -maxHorizontalMovement, maxHorizontalMovement);
+			newInput.y = Mathf.Clamp(newInput.y, -maxVerticalMovement, maxVerticalMovement);
+			input.DeltaAcceleration = newInput;
+			return input;
+		}
+	}
 	#endregion
 	
 	#region Debug
-	public bool debug;
+	public bool debugMode;
 	
 	void Start()
 	{
-		if (debug)
+		if (debugMode)
 			OnInput += HandleOnInput;
 	}
 	
@@ -149,7 +169,7 @@ public class InputController : MonoBehaviour
 	
 	void OnDrawGizmos()
 	{
-		if (!debug)
+		if (!debugMode)
 			return;
 		Vector3 position = new Vector3(input.DeltaAcceleration.x, input.DeltaAcceleration.y, 0);
 		Gizmos.DrawSphere(position, 1f);

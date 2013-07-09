@@ -39,30 +39,38 @@ public class GameController : MonoBehaviour
 	
 	void OnGUI()
 	{
-		GUILayout.BeginHorizontal();
+		bool returnKeyWentDown = false;
+		bool escapeKeyWentDown = false;
+		
+		Event e = Event.current;
+		if (e.type == EventType.KeyDown)
 		{
-			GUILayout.FlexibleSpace();
-			GUILayout.BeginVertical();
+			switch (e.keyCode)
 			{
-				GUILayout.FlexibleSpace();
-				if (gameState == GameState.Waiting)
-				{
-					if (GUILayout.Button("Start"))
-						GameStart();
-				}
-				else
-				{
-					if (GUILayout.Button("Restart"))
-						Restart();
-					GUILayout.Space(5);
-					if (GUILayout.Button("Finish"))
-						GameOver();
-				}
-				GUILayout.FlexibleSpace();
+			case KeyCode.Return:
+				returnKeyWentDown = true;
+				break;
+			case KeyCode.Escape:
+				escapeKeyWentDown = true;
+				break;
 			}
-			GUILayout.FlexibleSpace();
 		}
-		GUILayout.EndHorizontal();
+		GUILayout.BeginVertical();
+		{
+			if (gameState == GameState.Waiting)
+			{
+				if (GUILayout.Button("Start") || returnKeyWentDown)
+					GameStart();
+			}
+			else
+			{
+				if (GUILayout.Button("Restart") || returnKeyWentDown)
+					Restart();
+				GUILayout.Space(5);
+				if (GUILayout.Button("Finish") || escapeKeyWentDown)
+					GameOver();
+			}
+		}
 	}
 	#endregion
 	
@@ -91,6 +99,7 @@ public class GameController : MonoBehaviour
 	{
 		Player.transform.position = playerSpawnRef.position;
 		Player.transform.rotation = playerSpawnRef.rotation;
+		GameStart();
 	}
 	#endregion
 }
