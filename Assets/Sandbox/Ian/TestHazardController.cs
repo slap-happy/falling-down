@@ -37,10 +37,10 @@ public class TestHazardController : MonoBehaviour
 	void HandleGameControllerOnGameStarted()
 	{
 		ResetHazards();
-		hazards.topTier[Random.Range(0,2)].SetActive(true);
-		hazards.secondTier[Random.Range(0,2)].SetActive(true);
-		hazards.thirdTier[Random.Range(0,2)].SetActive(true);
-		hazards.bottomTier[Random.Range(0,2)].SetActive(true);
+		hazards.topTier[Random.Range(0, hazards.topTier.Length)].SetActive(false);
+		hazards.secondTier[Random.Range(0,hazards.secondTier.Length)].SetActive(false);
+		hazards.thirdTier[Random.Range(0,hazards.thirdTier.Length)].SetActive(false);
+		hazards.bottomTier[Random.Range(0,hazards.bottomTier.Length)].SetActive(false);
 	}
 	#endregion
 	
@@ -48,13 +48,13 @@ public class TestHazardController : MonoBehaviour
 	void ResetHazards()
 	{
 		foreach (GameObject go in hazards.topTier)
-			go.SetActive(false);
+			go.SetActive(true);
 		foreach (GameObject go in hazards.secondTier)
-			go.SetActive(false);
+			go.SetActive(true);
 		foreach (GameObject go in hazards.thirdTier)
-			go.SetActive(false);
+			go.SetActive(true);
 		foreach (GameObject go in hazards.bottomTier)
-			go.SetActive(false);
+			go.SetActive(true);
 	}
 	#endregion
 }
