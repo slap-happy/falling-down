@@ -14,6 +14,9 @@ public class Player : MonoBehaviour
 	public float normalDrag;
 	public float maxDrag;
 	public float terminalVelocity;
+	public GameObject dive;
+	public GameObject normal;
+	public GameObject flare;
 	#endregion
 	
 	#region Unity
@@ -37,7 +40,13 @@ public class Player : MonoBehaviour
 	
 	void Update()
 	{
-			
+		bool doFlare = currentInput.DeltaDrag > float.Epsilon;
+		bool doDive = currentInput.DeltaDrag < float.Epsilon;
+		normal.SetActive(!doFlare && !doDive);
+//		flare.SetActive(doFlare);
+		dive.SetActive(doDive);
+		
+		Debug.Log(string.Format("flare = {0}, dive = {1}, deltaDrag = {2}", doFlare, doDive, currentInput.DeltaDrag));
 	}
 	
 	void FixedUpdate()
@@ -86,6 +95,7 @@ public class Player : MonoBehaviour
 	void HandleInputControllerOnInput (ControlInput input)
 	{
 		currentInput = input;
+			
 		inputWasReceived = true;
 	}
 	
@@ -103,6 +113,7 @@ public class Player : MonoBehaviour
 	
 	#region Private
 	private ControlInput currentInput;
+	private ControlInput previousInput;
 	private bool inputWasReceived;
 	#endregion
 }

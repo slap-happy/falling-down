@@ -5,7 +5,7 @@ using System;
 public struct ControlInput
 {
 	#region Properties
-	public Vector2 DeltaAcceleration
+	public Vector2 CurrentAcceleration
 	{
 		get { return accelerationValue; }
 		
@@ -14,6 +14,11 @@ public struct ControlInput
 			HasChanged = accelerationValue != value;
 			accelerationValue = value;
 		}
+	}
+	
+	public float DeltaDrag 
+	{
+		get { return accelerationValue.y - lastAccelerationValue.y; }
 	}
 	
 	public float Drag
@@ -47,18 +52,20 @@ public struct ControlInput
 	public void Refresh()
 	{
 		HasChanged = false;
+		lastAccelerationValue = accelerationValue;
+		accelerationValue = Vector2.zero;
 	}
 	
 	public void Reset()
 	{
 		HasChanged = false;
 		attackButtonPressed = false;
-		accelerationValue = Vector2.zero;
 	}
 	#endregion
 	
 	#region Private
 	private Vector2 accelerationValue;
+	private Vector2 lastAccelerationValue;
 	private bool attackButtonPressed;
 	#endregion
 }
@@ -90,12 +97,12 @@ public class InputController : MonoBehaviour
 		PollMouse(ref input);
 		PollTouches(ref input);
 		PollKeyboard(ref input);
-		input.DeltaAcceleration *= Time.deltaTime * inputMultiplier;
+		input.CurrentAcceleration *= Time.deltaTime * inputMultiplier;
 		if (input.HasChanged && OnInput != null)
 		{
 			OnInput(NormalizedInput);
-			input.Refresh();
 		}
+		input.Refresh();
 	}
 	#endregion
 	
@@ -106,7 +113,7 @@ public class InputController : MonoBehaviour
 	
 	void PollKeyboard(ref ControlInput input)
 	{
-		input.DeltaAcceleration += new Vector2(Input.GetAxis("Horizontal") * maxHorizontalMovement, Input.GetAxis("Vertical") * maxVerticalMovement);
+		input.CurrentAcceleration += new Vector2(Input.GetAxis("Horizontal") * maxHorizontalMovement, Input.GetAxis("Vertical") * maxVerticalMovement);
 		input.Attack = Input.GetButton("Fire1");
 	}
 	
@@ -115,7 +122,7 @@ public class InputController : MonoBehaviour
 		Vector3 position = new Vector3(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"), 0) * mouseInputMultiplier;
 		if (position != lastMousePostion)
 		{
-			input.DeltaAcceleration = position;
+			input.CurrentAcceleration = position;
 			lastMousePostion = position;
 		}
 	}
@@ -125,7 +132,7 @@ public class InputController : MonoBehaviour
 		if (Input.touchCount > 0)
 		{
 			Touch[] touches = Input.touches;
-			Vector2 newDeltaAcceleration = input.DeltaAcceleration;
+			Vector2 newDeltaAcceleration = input.CurrentAcceleration;
 			Vector2 touchOneDelta = touches[0].deltaPosition;
 			switch (touches.Length)
 			{
@@ -139,7 +146,7 @@ public class InputController : MonoBehaviour
 						touchOneDelta.x - touchTwoDelta.x) * (firstFingerOnLeft ? -1 : 1);
 				break;
 			}
-			input.DeltaAcceleration = newDeltaAcceleration;
+			input.CurrentAcceleration = newDeltaAcceleration;
 		}
 	}
 	
@@ -147,10 +154,10 @@ public class InputController : MonoBehaviour
 	{
 		get
 		{
-			Vector2 newInput = input.DeltaAcceleration;
+			Vector2 newInput = input.CurrentAcceleration;
 			newInput.x = Mathf.Clamp(newInput.x, -maxHorizontalMovement, maxHorizontalMovement);
 			newInput.y = Mathf.Clamp(newInput.y, -maxVerticalMovement, maxVerticalMovement);
-			input.DeltaAcceleration = newInput;
+			input.CurrentAcceleration = newInput;
 			return input;
 		}
 	}
@@ -167,7 +174,7 @@ public class InputController : MonoBehaviour
 	
 	void HandleOnInput(ControlInput input)
 	{
-		Debug.Log(string.Format("HandleOnInput: DeltaForce = {0} Drag = {1}", input.DeltaForce, input.Drag));
+		Debug.Log(string.Format("HandleOnInput: DeltaForce = {0} Drag = {1}, DeltaDrag = {2}", input.DeltaForce, input.Drag, input.DeltaDrag));
 	}
 	
 	void OnDrawGizmos()
