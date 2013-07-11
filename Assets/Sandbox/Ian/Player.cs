@@ -3,6 +3,12 @@ using System.Collections;
 
 public class Player : MonoBehaviour
 {
+	#region Events
+	public delegate void HitHazard(float relativeVelocity);
+	
+	public HitHazard OnHitHazard;
+	#endregion
+	
 	#region Attributes
 	public float minDrag;
 	public float normalDrag;
@@ -31,6 +37,33 @@ public class Player : MonoBehaviour
 	
 	void Update()
 	{
+			
+	}
+	
+	void FixedUpdate()
+	{
+		if (inputWasReceived)
+		{
+			rigidbody.AddForce(currentInput.DeltaForce, ForceMode.Impulse);
+			float newDrag = currentInput.Drag * Time.deltaTime;
+			if (newDrag != 0)
+			{
+				rigidbody.drag += newDrag;
+				if (rigidbody.drag < minDrag || rigidbody.drag > maxDrag)
+					rigidbody.drag = Mathf.Clamp(rigidbody.drag, minDrag, maxDrag);
+					
+			}
+			inputWasReceived = false;
+		}
+		else
+		{
+		
+		if (rigidbody.drag > normalDrag)
+			rigidbody.drag -= 1 * Time.deltaTime;
+		else if (rigidbody.drag < normalDrag)
+			rigidbody.drag += 1 * Time.deltaTime;
+		}
+		
 		if (rigidbody.velocity.y > terminalVelocity)
 		{
 			Vector3 newVelocity = rigidbody.velocity;
@@ -39,18 +72,13 @@ public class Player : MonoBehaviour
 		}
 	}
 	
-	void FixedUpdate()
+	void OnCollisionEnter(Collision collision)
 	{
-		rigidbody.AddForce(currentInput.DeltaForce, ForceMode.Impulse);
-		float newDrag = currentInput.Drag * Time.deltaTime;
-		if (newDrag != 0)
+		if (collision.transform.tag == "Hazard")
 		{
-			rigidbody.drag += newDrag;
-			if (rigidbody.drag < minDrag || rigidbody.drag > maxDrag)
-				rigidbody.drag = Mathf.Clamp(rigidbody.drag, minDrag, maxDrag);
-				
+			if (OnHitHazard != null)
+				OnHitHazard(collision.relativeVelocity.y);
 		}
-		enabled = false;
 	}
 	#endregion
 	
@@ -58,7 +86,7 @@ public class Player : MonoBehaviour
 	void HandleInputControllerOnInput (ControlInput input)
 	{
 		currentInput = input;
-		enabled = true;
+		inputWasReceived = true;
 	}
 	
 	void HandleGameControllerOnGameStarted()
@@ -75,5 +103,6 @@ public class Player : MonoBehaviour
 	
 	#region Private
 	private ControlInput currentInput;
+	private bool inputWasReceived;
 	#endregion
 }
