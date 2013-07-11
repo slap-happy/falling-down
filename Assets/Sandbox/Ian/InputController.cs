@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 
-public struct Inputs
+public struct ControlInput
 {
 	#region Properties
 	public Vector2 DeltaAcceleration
@@ -16,9 +16,14 @@ public struct Inputs
 		}
 	}
 	
+	public float Drag
+	{
+		get { return accelerationValue.y; }
+	}
+	
 	public Vector3 DeltaForce
 	{
-		get { return new Vector3 (accelerationValue.x, accelerationValue.y, 0); }
+		get { return new Vector3 (accelerationValue.x, 0, 0); }
 	}
 	
 	public bool Attack
@@ -61,7 +66,7 @@ public struct Inputs
 public class InputController : MonoBehaviour
 {
 	#region Events
-	public delegate void InputDelegate(Inputs input);
+	public delegate void InputDelegate(ControlInput input);
 	
 	public static event InputDelegate OnInput;
 	#endregion
@@ -69,16 +74,15 @@ public class InputController : MonoBehaviour
 	#region Attributes
 	public float maxHorizontalMovement;
 	public float maxVerticalMovement;
+	public float mouseInputMultiplier;
 	public float inputMultiplier;
 	#endregion
 	
 	#region Unity
 	void Awake()
 	{
-		input = new Inputs();
-		Screen.showCursor = false;
-		centerOfScreen = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0);
-		Debug.Log(centerOfScreen);
+		input = new ControlInput();
+		lastMousePostion = Vector3.zero;
 	}
 	
 	void Update()
@@ -92,26 +96,31 @@ public class InputController : MonoBehaviour
 			OnInput(NormalizedInput);
 			input.Refresh();
 		}
-			
 	}
 	#endregion
 	
 	#region Private
-	private Inputs input;
-	private Vector3 centerOfScreen;
+	private Vector3 mouseStartPosition;
+	private Vector3 lastMousePostion;
+	private ControlInput input;
 	
-	void PollMouse(ref Inputs input)
+	void PollKeyboard(ref ControlInput input)
 	{
-		Vector3 position = Input.mousePosition - centerOfScreen;
-		if (position.x != centerOfScreen.x)
+		input.DeltaAcceleration += new Vector2(Input.GetAxis("Horizontal") * maxHorizontalMovement, Input.GetAxis("Vertical") * maxVerticalMovement);
+		input.Attack = Input.GetButton("Fire1");
+	}
+	
+	void PollMouse(ref ControlInput input)
+	{
+		Vector3 position = new Vector3(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"), 0) * mouseInputMultiplier;
+		if (position != lastMousePostion)
 		{
-			Debug.Log(position);
-			position.y = 0;
 			input.DeltaAcceleration = position;
+			lastMousePostion = position;
 		}
 	}
 	
-	void PollTouches(ref Inputs input)
+	void PollTouches(ref ControlInput input)
 	{
 		if (Input.touchCount > 0)
 		{
@@ -134,13 +143,7 @@ public class InputController : MonoBehaviour
 		}
 	}
 	
-	void PollKeyboard(ref Inputs input)
-	{
-		input.DeltaAcceleration += new Vector2(Input.GetAxis("Horizontal") * maxHorizontalMovement, Input.GetAxis("Vertical") * maxVerticalMovement);
-		input.Attack = Input.GetButton("Fire1");
-	}
-	
-	Inputs NormalizedInput
+	ControlInput NormalizedInput
 	{
 		get
 		{
@@ -162,16 +165,16 @@ public class InputController : MonoBehaviour
 			OnInput += HandleOnInput;
 	}
 	
-	void HandleOnInput(Inputs input)
+	void HandleOnInput(ControlInput input)
 	{
-		Debug.Log("OnInputCalled");
+		Debug.Log(string.Format("HandleOnInput: DeltaForce = {0} Drag = {1}", input.DeltaForce, input.Drag));
 	}
 	
 	void OnDrawGizmos()
 	{
 		if (!debugMode)
 			return;
-		Vector3 position = new Vector3(input.DeltaAcceleration.x, input.DeltaAcceleration.y, 0);
+		Vector3 position = new Vector3(input.DeltaForce.x, input.Drag, 0);
 		Gizmos.DrawSphere(position, 1f);
 		Gizmos.color = Color.red;
 		Gizmos.DrawLine(position, Vector3.zero);
