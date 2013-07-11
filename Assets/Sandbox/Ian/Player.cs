@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
 	public float minDrag;
 	public float normalDrag;
 	public float maxDrag;
+	public float terminalVelocity;
 	#endregion
 	
 	#region Unity
@@ -26,6 +27,16 @@ public class Player : MonoBehaviour
 	void OnDestroy()
 	{
 		InputController.OnInput -= HandleInputControllerOnInput;
+	}
+	
+	void Update()
+	{
+		if (rigidbody.velocity.y > terminalVelocity)
+		{
+			Vector3 newVelocity = rigidbody.velocity;
+			newVelocity.y = terminalVelocity;
+			rigidbody.velocity = newVelocity;
+		}
 	}
 	
 	void FixedUpdate()
