@@ -3,6 +3,12 @@ using System.Collections;
 
 public class Player : MonoBehaviour
 {
+	#region Events
+	public delegate void HitHazard(float relativeVelocity);
+	
+	public HitHazard OnHitHazard;
+	#endregion
+	
 	#region Attributes
 	public float minDrag;
 	public float normalDrag;
@@ -63,6 +69,15 @@ public class Player : MonoBehaviour
 			Vector3 newVelocity = rigidbody.velocity;
 			newVelocity.y = terminalVelocity;
 			rigidbody.velocity = newVelocity;
+		}
+	}
+	
+	void OnCollisionEnter(Collision collision)
+	{
+		if (collision.transform.tag == "Hazard")
+		{
+			if (OnHitHazard != null)
+				OnHitHazard(collision.relativeVelocity.y);
 		}
 	}
 	#endregion
