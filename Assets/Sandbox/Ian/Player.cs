@@ -40,13 +40,22 @@ public class Player : MonoBehaviour
 	
 	void Update()
 	{
-		bool doFlare = currentInput.DeltaDrag > float.Epsilon;
-		bool doDive = currentInput.DeltaDrag < float.Epsilon;
-		normal.SetActive(!doFlare && !doDive);
-//		flare.SetActive(doFlare);
-		dive.SetActive(doDive);
+		AdjustPose ();
+	}
+
+	void AdjustPose ()
+	{
+		bool doFlare = false;
+		bool doDive = false;
+		if (Input.GetAxis("Vertical") < 0) {
+			doDive = true;
+		} else if (Input.GetAxis("Vertical") > 0) {
+			doFlare = true;
+		}
 		
-		Debug.Log(string.Format("flare = {0}, dive = {1}, deltaDrag = {2}", doFlare, doDive, currentInput.DeltaDrag));
+		normal.SetActive(!doFlare && !doDive);
+		flare.SetActive(doFlare);
+		dive.SetActive(doDive);
 	}
 	
 	void FixedUpdate()
