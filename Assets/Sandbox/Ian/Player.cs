@@ -19,6 +19,21 @@ public class Player : MonoBehaviour
 	public GameObject flare;
 	#endregion
 	
+	private float rollForce = 40;
+	private float rollPenaltyForce = 5;
+	private float doubleTapSpeed = 0.5f;
+	
+	private State currentState = State.Normal;
+	
+	private enum State {
+		Normal,
+		Dive,
+		Flare,
+		RollLeft,
+		RollRight,
+		Dead
+	}
+	
 	#region Unity
 	void OnEnable()
 	{
@@ -40,22 +55,105 @@ public class Player : MonoBehaviour
 	
 	void Update()
 	{
-		AdjustPose ();
+		DetectInput ();
+		Animate ();
 	}
-
-	void AdjustPose ()
+		
+	private float lastTapTimeLeft = 0;
+	private float lastTapTimeRight = 0;
+	void DetectInput () 
 	{
-		bool doFlare = false;
-		bool doDive = false;
-		if (Input.GetAxis("Vertical") < 0) {
-			doDive = true;
-		} else if (Input.GetAxis("Vertical") > 0) {
-			doFlare = true;
+		// Rolls are animated an can't be broken out of early
+		if (currentState != State.RollLeft && currentState != State.RollRight) {
+			
+			if (Input.GetAxis("Vertical") < 0) {
+				currentState = State.Dive;
+			} else if (Input.GetAxis("Vertical") > 0) {
+				currentState = State.Flare;
+			} else {
+				currentState = State.Normal;
+			}
+			
+			// This all should be moved out into a PlayerInput class
+			if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+				if ((Time.time - lastTapTimeLeft) < doubleTapSpeed) {
+					currentState = State.RollLeft;
+				}
+				lastTapTimeLeft = Time.time;
+			}
+			
+			if (Input.GetKeyDown(KeyCode.RightArrow)) {
+				if ((Time.time - lastTapTimeRight) < doubleTapSpeed) {
+					currentState = State.RollRight;
+				}
+				lastTapTimeRight = Time.time;
+			}
 		}
+	}
+	
+	void Animate ()
+	{
+		switch (currentState) {
+			case State.RollLeft:
+			case State.RollRight:
+				BarrelRoll ();
+				break;
+		
+			case State.Normal:
+			case State.Flare:
+			case State.Dive:
+				SetPosture(currentState);
+				break;
+		}
+	}
+	
+	private void SetPosture(State state) {
+		bool doDive = false;
+		bool doFlare = false;
+		if (state == State.Dive) {
+			doDive = true;
+		} else if (state == State.Flare) {
+			doFlare = true;
+		} 		
 		
 		normal.SetActive(!doFlare && !doDive);
 		flare.SetActive(doFlare);
 		dive.SetActive(doDive);
+	}
+	
+	private float totalRotation = 0;
+	void BarrelRoll ()
+	{
+		// Roll "animation"
+		float rotate = 360 * Time.deltaTime * 3;
+		totalRotation += rotate;
+		
+		SetPosture (State.Dive);
+		
+		if (currentState == State.RollLeft) {
+			dive.transform.Rotate(0, -rotate, 0);
+		}
+		if (currentState == State.RollRight) {
+			dive.transform.Rotate(0, rotate, 0);
+		}
+		
+		if (totalRotation >= 360) {
+			totalRotation = 0;
+			currentState = State.Normal;
+			// Reset rotation in case he overrotated due to inexact math
+			//Quaternion newRotation = dive.transform.rotation;
+			//newRotation.x = 0;
+			//dive.transform.rotation = newRotation;
+			
+			// Mostly kill his sideways velocity.
+			Vector3 newVelocity = rigidbody.velocity;
+			if (rigidbody.velocity.x > 0) {
+				newVelocity.x = 5;
+			} else if (rigidbody.velocity.x < 0) {
+				newVelocity.x = -5;
+			}
+			rigidbody.velocity = newVelocity;
+		}
 	}
 	
 	void FixedUpdate()
@@ -72,14 +170,22 @@ public class Player : MonoBehaviour
 					
 			}
 			inputWasReceived = false;
-		}
-		else
-		{
-		
-		if (rigidbody.drag > normalDrag)
-			rigidbody.drag -= 1 * Time.deltaTime;
-		else if (rigidbody.drag < normalDrag)
-			rigidbody.drag += 1 * Time.deltaTime;
+			
+			if (currentState == State.RollLeft) {
+				rigidbody.AddForce(new Vector3(-rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+				
+			}
+			if (currentState == State.RollRight) {
+				rigidbody.AddForce(new Vector3(rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+				
+			}
+			
+		} else {
+			if (rigidbody.drag > normalDrag) {
+				rigidbody.drag -= 1 * Time.deltaTime;
+			} else if (rigidbody.drag < normalDrag) {
+				rigidbody.drag += 1 * Time.deltaTime;
+			}
 		}
 		
 		if (rigidbody.velocity.y > terminalVelocity)
