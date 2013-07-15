@@ -23,6 +23,8 @@ public class Player : MonoBehaviour
 	private float rollPenaltyForce = 5;
 	private float doubleTapSpeed = 0.5f;
 	
+	private Quaternion originalRotation;
+	
 	private State currentState = State.Normal;
 	
 	private enum State {
@@ -77,6 +79,7 @@ public class Player : MonoBehaviour
 			// This all should be moved out into a PlayerInput class
 			if (Input.GetKeyDown(KeyCode.LeftArrow)) {
 				if ((Time.time - lastTapTimeLeft) < doubleTapSpeed) {
+					originalRotation = dive.transform.rotation;
 					currentState = State.RollLeft;
 				}
 				lastTapTimeLeft = Time.time;
@@ -84,6 +87,7 @@ public class Player : MonoBehaviour
 			
 			if (Input.GetKeyDown(KeyCode.RightArrow)) {
 				if ((Time.time - lastTapTimeRight) < doubleTapSpeed) {
+					originalRotation = dive.transform.rotation;
 					currentState = State.RollRight;
 				}
 				lastTapTimeRight = Time.time;
@@ -141,9 +145,7 @@ public class Player : MonoBehaviour
 			totalRotation = 0;
 			currentState = State.Normal;
 			// Reset rotation in case he overrotated due to inexact math
-			//Quaternion newRotation = dive.transform.rotation;
-			//newRotation.x = 0;
-			//dive.transform.rotation = newRotation;
+			dive.transform.rotation = originalRotation;
 			
 			// Mostly kill his sideways velocity.
 			Vector3 newVelocity = rigidbody.velocity;
