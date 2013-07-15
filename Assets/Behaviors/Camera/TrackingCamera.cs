@@ -4,18 +4,19 @@ public class TrackingCamera : MonoBehaviour {
 
 	public Transform target;
 
-	private Transform container;
-
-	void Start() {
-		container = FindContainer(transform);
-	}
-
-	// Update is called once per frame
+	/**
+	 * Lerps the camera position towards the target's vertical position.
+	 */
 	void Update() {
-		container.position = new Vector3(container.position.x, target.position.y, container.position.z);
+		//transform.position = Vector3.Lerp(transform.position, TargetPosition(), 1);
+		transform.position = new Vector3(transform.position.x, target.position.y, transform.position.z);
 	}
 
-	private Transform FindContainer(Transform transform) {
-		return (transform.parent == null) ? transform : FindContainer(transform.parent);
+	Vector3 TargetPosition() {
+		return new Vector3(transform.position.x, target.position.y, transform.position.z);
+	}
+
+	float DistanceFromTarget() {
+		return Vector3.Distance(transform.position, target.position);
 	}
 }

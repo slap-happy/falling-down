@@ -11,7 +11,7 @@ public struct ControlInput
 		
 		set
 		{
-			HasChanged = accelerationValue != value;
+			HasChanged = HasChanged || (accelerationValue != value);
 			accelerationValue = value;
 		}
 	}
@@ -40,7 +40,7 @@ public struct ControlInput
 		
 		set
 		{
-			HasChanged = attackButtonPressed != value;
+			HasChanged = HasChanged || (attackButtonPressed != value);
 			attackButtonPressed = value;
 		}
 	}
