@@ -36,6 +36,8 @@ public class Player : MonoBehaviour
 		Dead
 	}
 	
+	private bool warningHit = false;
+	
 	#region Unity
 	void OnEnable()
 	{
@@ -53,6 +55,15 @@ public class Player : MonoBehaviour
 	void OnDestroy()
 	{
 		InputController.OnInput -= HandleInputControllerOnInput;
+	}
+	
+	void OnGUI () {
+		if (warningHit == true) {
+			float width = 150;
+			float height = 25;
+			float left = (Screen.width / 2) - (width / 2);
+			GUI.Box(new Rect(left, 10, width, height), "Prepare for landing!");	
+		}
 	}
 	
 	void Update()
@@ -204,6 +215,18 @@ public class Player : MonoBehaviour
 		{
 			if (OnHitHazard != null)
 				OnHitHazard(collision.relativeVelocity.y);
+		}
+	}
+	
+	void OnTriggerEnter(Collider other) {
+		if (other.transform.tag == "Warning Line") {
+			warningHit = true;
+		}
+		
+		if (other.transform.tag == "Finish Line") {
+			// Check speed
+			// if too fast, squish death
+			// If good speed, show popup cube with score. Freeze player position
 		}
 	}
 	#endregion
