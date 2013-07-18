@@ -39,6 +39,13 @@ public class Player : MonoBehaviour
 	private bool warningHit = false;
 	
 	#region Unity
+	void Awake()
+	{
+		TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
+		if (trackingCamera != null)
+			trackingCamera.SetTarget(transform);
+	}
+	
 	void OnEnable()
 	{
 		GameController.OnGameStarted += HandleGameControllerOnGameStarted;

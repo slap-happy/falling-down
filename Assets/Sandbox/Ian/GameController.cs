@@ -37,8 +37,8 @@ public class GameController : MonoBehaviour
 	void Awake()
 	{
 		Physics.gravity = new Vector3(0, -forceOfGravity, 0);
-		if (sceneCamera != null)
-			sceneCamera.SetActive(false);
+//		if (sceneCamera != null)
+//			sceneCamera.SetActive(false);
 	}
 	
 	void OnGUI()
