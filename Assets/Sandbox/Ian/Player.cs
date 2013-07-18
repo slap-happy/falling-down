@@ -17,6 +17,7 @@ public class Player : MonoBehaviour
 	public GameObject dive;
 	public GameObject normal;
 	public GameObject flare;
+	public Transform cameraTargetRef;
 	#endregion
 	
 	private float rollForce = 40;
@@ -41,9 +42,12 @@ public class Player : MonoBehaviour
 	#region Unity
 	void Awake()
 	{
-		TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
-		if (trackingCamera != null)
-			trackingCamera.SetTarget(transform.FindChild("cameraTargetRef"));
+		if (cameraTargetRef != null)
+		{
+			TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
+			if (trackingCamera != null)
+				trackingCamera.SetTarget(cameraTargetRef);
+		}
 	}
 	
 	void OnEnable()

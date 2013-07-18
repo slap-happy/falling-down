@@ -16,6 +16,16 @@ public class TrackingCamera : MonoBehaviour
 		enabled = false;
 	}
 	
+	void OnEnable()
+	{
+		GameController.OnGameStarted += HandleGameControllerOnGameStarted;
+	}
+	
+	void OnDisable()
+	{
+		GameController.OnGameStarted -= HandleGameControllerOnGameStarted;
+	}
+	
 	/**
 	 * Lerps the camera position towards the target's vertical position by the distance from the target.
 	 */
@@ -26,7 +36,7 @@ public class TrackingCamera : MonoBehaviour
 		targetPosition.y = target.position.y;
 		
 		transform.position = Vector3.SmoothDamp(ourPosition, targetPosition, ref currentVelocity, 0.5f);
-		Debug.Log(currentVelocity);
+		
 		// experimental: causes the camera to pivot to face the target
 		if (lookAtTarget)
 			transform.LookAt(target);
@@ -52,6 +62,15 @@ public class TrackingCamera : MonoBehaviour
 	{
 		enabled = false;
 		target = null;
+	}
+	#endregion
+	
+	#region Handlers
+	void HandleGameControllerOnGameStarted()
+	{
+		Vector3 currentPosition = transform.position;
+		Vector3 placementPosition = new Vector3(currentPosition.x, target.position.y, currentPosition.z);
+		transform.position = placementPosition;
 	}
 	#endregion
 	
