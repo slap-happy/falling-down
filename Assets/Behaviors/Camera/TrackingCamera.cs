@@ -7,13 +7,41 @@ public class TrackingCamera : MonoBehaviour
 	public bool lookAtTarget;
 	#endregion
 	
+	#region Unity
+	/*
+	 * Ensures that the component will be initialized to inactive.
+	 */
+	void Awake()
+	{
+		enabled = false;
+	}
+	
+	/**
+	 * Lerps the camera position towards the target's vertical position by the distance from the target.
+	 */
+	void Update()
+	{
+		Vector3 ourPosition = transform.position;
+		Vector3 targetPosition = transform.position;
+		targetPosition.y = target.position.y;
+		
+		float lerpValue = DistanceFromTarget(ourPosition, target.position, true);
+		transform.position = Vector3.Lerp(ourPosition, targetPosition, lerpValue);
+		
+		// experimental: causes the camera to pivot to face the target
+		if (lookAtTarget)
+			transform.LookAt(target);
+	}
+	#endregion
+	
 	#region Properties
 	/**
-	 * Provides the distance between the player and the camera as a value between 0 and 1 to be used as a lerp.
+	 * Provides the distance between the player and the camera.
+	 * If clampValue is true, returns a value between 0 and 1.
 	 */
-	float DistanceFromTarget(Vector3 ourPosition, Vector3 target, bool clampValue)
+	float DistanceFromTarget(Vector3 ourPosition, Vector3 targetPosition, bool clampValue)
 	{
-		float distance = Vector3.Distance(ourPosition, target);
+		float distance = Vector3.Distance(ourPosition, targetPosition);
 		if (clampValue)
 			distance = Mathf.Clamp(distance, 0, 1);
 		return distance;
@@ -22,33 +50,27 @@ public class TrackingCamera : MonoBehaviour
 	
 	#region Actions
 	/**
-	 * Sets the camera's follow target
+	 * Sets the camera's follow target and enables the component.
 	 */
 	public void SetTarget(Transform target)
 	{
-		StartCoroutine(TrackTarget(target));
+		if (Debug.isDebugBuild)
+			Debug.Log(string.Format("Began tracking target, '{0}'.", target.name));
+		this.target = target;
+		enabled = true;
+	}
+	
+	/**
+	 * Unsets the target and disables the component.
+	 */
+	public void RemoveTarget()
+	{
+		enabled = false;
+		target = null;
 	}
 	#endregion
 	
 	#region Private
-	/**
-	 * Lerps the camera position towards the target's vertical position by the distance from the target.
-	 */
-	IEnumerator TrackTarget(Transform target)
-	{
-		if (Debug.isDebugBuild)
-			Debug.Log(string.Format("Began tracking target, '{0}'.", target.name));
-		
-		while (target != null)
-		{
-			Vector3 ourPosition = transform.position;
-			Vector3 targetPosition = transform.position;
-			targetPosition.y = target.position.y;
-			transform.position = Vector3.Lerp(ourPosition, targetPosition, DistanceFromTarget(ourPosition, target.position, true));
-			if (lookAtTarget)
-				transform.LookAt(target);	// experimental property to allow the camera to pivot toward the target
-			yield return null;
-		}
-	}
+	private Transform target;
 	#endregion
 }
