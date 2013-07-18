@@ -43,7 +43,7 @@ public class Player : MonoBehaviour
 	{
 		TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
 		if (trackingCamera != null)
-			trackingCamera.SetTarget(transform);
+			trackingCamera.SetTarget(transform.FindChild("cameraTargetRef"));
 	}
 	
 	void OnEnable()
