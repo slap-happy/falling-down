@@ -16,7 +16,7 @@ public class TouchPlayerInputSource : PlayerInputSource {
 		float secondary = -1f;
 
 		foreach (Touch touch in Input.touches) {
-			if (touch.phase == TouchPhase.Ended && touch.tapCount >= 2 && touch.deltaTime < multiTapThreshold) {
+			if (touch.phase == TouchPhase.Began && touch.tapCount >= 2 && touch.deltaTime < multiTapThreshold) {
 				return new PlayerInput(CursorPosition(touch.position.x), 0, PlayerInput.Action.Roll);
 			}
 			else if (touch.phase != TouchPhase.Ended || touch.phase != TouchPhase.Canceled) {
