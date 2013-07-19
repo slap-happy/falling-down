@@ -10,8 +10,9 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Attributes
+	public float cursorDistance = 100f;
+	public float cursorSpaceWidth = 50f;
 	public float minDrag;
-	public float normalDrag;
 	public float maxDrag;
 	public float terminalVelocity;
 	public GameObject dive;
@@ -21,7 +22,6 @@ public class Player : MonoBehaviour
 	
 	private float rollForce = 40;
 	private float rollPenaltyForce = 5;
-	private float doubleTapSpeed = 0.5f;
 	
 	private Quaternion originalRotation;
 	
@@ -41,7 +41,7 @@ public class Player : MonoBehaviour
 	{
 		GameController.OnGameStarted += HandleGameControllerOnGameStarted;
 		GameController.OnGameEnded += HandleGameControllerOnGameEnded;
-		InputController.OnInput += HandleInputControllerOnInput;
+		PlayerInputController.OnInput += HandleInputControllerOnInput;
 	}
 	
 	void OnDisable()
@@ -52,55 +52,20 @@ public class Player : MonoBehaviour
 	
 	void OnDestroy()
 	{
-		InputController.OnInput -= HandleInputControllerOnInput;
+		PlayerInputController.OnInput -= HandleInputControllerOnInput;
 	}
 	
-	void Update()
+	void LateUpdate()
 	{
-		DetectInput ();
-		Animate ();
+		Animate();
 	}
 		
-	private float lastTapTimeLeft = 0;
-	private float lastTapTimeRight = 0;
-	void DetectInput () 
-	{
-		// Rolls are animated an can't be broken out of early
-		if (currentState != State.RollLeft && currentState != State.RollRight) {
-			
-			if (Input.GetAxis("Vertical") < 0) {
-				currentState = State.Dive;
-			} else if (Input.GetAxis("Vertical") > 0) {
-				currentState = State.Flare;
-			} else {
-				currentState = State.Normal;
-			}
-			
-			// This all should be moved out into a PlayerInput class
-			if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-				if ((Time.time - lastTapTimeLeft) < doubleTapSpeed) {
-					originalRotation = dive.transform.rotation;
-					currentState = State.RollLeft;
-				}
-				lastTapTimeLeft = Time.time;
-			}
-			
-			if (Input.GetKeyDown(KeyCode.RightArrow)) {
-				if ((Time.time - lastTapTimeRight) < doubleTapSpeed) {
-					originalRotation = dive.transform.rotation;
-					currentState = State.RollRight;
-				}
-				lastTapTimeRight = Time.time;
-			}
-		}
-	}
-	
-	void Animate ()
+	void Animate()
 	{
 		switch (currentState) {
 			case State.RollLeft:
 			case State.RollRight:
-				BarrelRoll ();
+				BarrelRoll();
 				break;
 		
 			case State.Normal:
@@ -160,41 +125,73 @@ public class Player : MonoBehaviour
 	
 	void FixedUpdate()
 	{
-		if (inputWasReceived)
-		{
-			rigidbody.AddForce(currentInput.DeltaForce, ForceMode.Impulse);
-			float newDrag = currentInput.Drag * Time.deltaTime;
-			if (newDrag != 0)
-			{
-				rigidbody.drag += newDrag;
-				if (rigidbody.drag < minDrag || rigidbody.drag > maxDrag)
-					rigidbody.drag = Mathf.Clamp(rigidbody.drag, minDrag, maxDrag);
-					
-			}
-			inputWasReceived = false;
-			
-			if (currentState == State.RollLeft) {
-				rigidbody.AddForce(new Vector3(-rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
-				
-			}
-			if (currentState == State.RollRight) {
-				rigidbody.AddForce(new Vector3(rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
-				
-			}
-			
-		} else {
-			if (rigidbody.drag > normalDrag) {
-				rigidbody.drag -= 1 * Time.deltaTime;
-			} else if (rigidbody.drag < normalDrag) {
-				rigidbody.drag += 1 * Time.deltaTime;
-			}
+		// Rolls are animated an can't be broken out of early
+		if (currentState != State.RollLeft && currentState != State.RollRight) {
+			MoveTowardCursor();
+			ApplyDrag();
+			PerformActions();
 		}
-		
-		if (rigidbody.velocity.y > terminalVelocity)
+
+		if (terminalVelocity > 0 && rigidbody.velocity.y > terminalVelocity)
 		{
 			Vector3 newVelocity = rigidbody.velocity;
 			newVelocity.y = terminalVelocity;
 			rigidbody.velocity = newVelocity;
+		}
+
+		inputWasReceived = false;
+	}
+
+	/**
+	 * Moves towards the virtual cursor according to player input. The cursor
+	 * is always calculated as a fixed distance beneath the player while falling.
+	 */
+	void MoveTowardCursor() {
+		cursor = new Vector3(
+				inputWasReceived ? (currentInput.cursorPosition * cursorSpaceWidth) : cursor.x,
+				transform.position.y - cursorDistance,
+				transform.position.z
+		);
+
+		Vector3 desiredPosition = new Vector3(cursor.x, transform.position.y, transform.position.z);
+
+		transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 1f);
+
+		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
+		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
+
+		// Apply a penalty force if rolling
+		if (inputWasReceived) {
+			switch (currentState) {
+				case State.RollLeft:
+					rigidbody.AddForce(new Vector3(-rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+					break;
+				case State.RollRight:
+					rigidbody.AddForce(new Vector3(rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+					break;
+			}
+		}
+	}
+
+	/**
+	 * Adjusts drag according to input.
+	 */
+	void ApplyDrag() {
+		float flare = inputWasReceived ? currentInput.flareMagnitude : 0;
+		rigidbody.drag = minDrag + ((maxDrag - minDrag) * flare);
+	}
+
+	/**
+	 * Handles any inputed actions.
+	 */
+	void PerformActions() {
+		if (inputWasReceived) {
+			switch (currentInput.action) {
+				case PlayerInput.Action.Roll:
+					originalRotation = dive.transform.rotation;
+					currentState = currentInput.cursorPosition > 0 ? State.RollRight : State.RollLeft;
+					break;
+			}
 		}
 	}
 	
@@ -209,17 +206,16 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Handlers
-	void HandleInputControllerOnInput (ControlInput input)
+	void HandleInputControllerOnInput (PlayerInput input)
 	{
 		currentInput = input;
-			
 		inputWasReceived = true;
 	}
-	
+
 	void HandleGameControllerOnGameStarted()
 	{
 		rigidbody.velocity = Vector3.down * 15;
-		rigidbody.drag = normalDrag;
+		rigidbody.drag = minDrag;
 	}
 	
 	void HandleGameControllerOnGameEnded()
@@ -229,8 +225,9 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Private
-	private ControlInput currentInput;
-	private ControlInput previousInput;
+	private PlayerInput currentInput;
+	private PlayerInput previousInput;
 	private bool inputWasReceived;
+	private Vector3 cursor;
 	#endregion
 }

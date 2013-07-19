@@ -24,8 +24,12 @@ public class GameController : MonoBehaviour
 	{
 		get
 		{
-			if (player == null)
-				player = GameObject.Instantiate(playerPrefab, playerSpawnRef.position, playerSpawnRef.rotation) as GameObject;
+			if (player == null) {
+				player = GameObject.FindWithTag("Player");
+
+				if (player == null)
+					player = GameObject.Instantiate(playerPrefab, playerSpawnRef.position, playerSpawnRef.rotation) as GameObject;
+			}
 			return player;
 		}
 	}
@@ -84,6 +88,11 @@ public class GameController : MonoBehaviour
 		Player.SetActive(true);
 		if (OnGameStarted != null)
 			OnGameStarted();
+
+		GameObject camera = GameObject.FindWithTag("MainCamera");
+		if (camera) {
+			camera.GetComponent<TrackingCamera>().target = Player.transform;
+		}
 	}
 	
 	void GameOver()
