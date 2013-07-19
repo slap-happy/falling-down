@@ -42,6 +42,8 @@ public class Player : MonoBehaviour
 	#region Unity
 	void Awake()
 	{
+		instance = this;
+		
 		if (cameraTargetRef != null)
 		{
 			TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
@@ -242,6 +244,16 @@ public class Player : MonoBehaviour
 	}
 	#endregion
 	
+	#region Properties
+	public static Player Instance
+	{
+		get
+		{
+			return instance;
+		}
+	}
+	#endregion
+	
 	#region Handlers
 	void HandleInputControllerOnInput (ControlInput input)
 	{
@@ -263,6 +275,8 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Private
+	private static Player instance;
+	
 	private ControlInput currentInput;
 	private ControlInput previousInput;
 	private bool inputWasReceived;

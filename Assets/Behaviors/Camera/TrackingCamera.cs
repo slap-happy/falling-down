@@ -14,6 +14,7 @@ public class TrackingCamera : MonoBehaviour
 	 */
 	void Awake()
 	{
+		startingPosition = transform.position;
 		enabled = false;
 	}
 	
@@ -33,8 +34,9 @@ public class TrackingCamera : MonoBehaviour
 	void FixedUpdate()
 	{
 		Vector3 ourPosition = transform.position;
-		Vector3 targetPosition = transform.position;
-		targetPosition.y = target.position.y;
+		Vector3 targetPosition = target.position;
+		targetPosition.x = startingPosition.x;
+		targetPosition.z = startingPosition.z;
 		
 		transform.position = Vector3.SmoothDamp(ourPosition, targetPosition, ref currentVelocity, trackingSpeed);
 		
@@ -72,10 +74,14 @@ public class TrackingCamera : MonoBehaviour
 		Vector3 currentPosition = transform.position;
 		Vector3 placementPosition = new Vector3(currentPosition.x, target.position.y, currentPosition.z);
 		transform.position = placementPosition;
+		(cameraShake ?? (cameraShake = GetComponent<CameraShake>())).enabled = true;
+		cameraShake.enabled = true;
 	}
 	#endregion
 	
 	#region Private
+	private Vector3 startingPosition;
+	private CameraShake cameraShake;
 	private Vector3 currentVelocity;
 	private Transform target;
 	#endregion
