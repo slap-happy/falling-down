@@ -6,7 +6,7 @@ public class KeyboardPlayerInputSource : PlayerInputSource {
 	 * The increment at which the keyboard left/right moves the cursor (between
 	 * -1 and 1).
 	 */
-	public float cursorMovement = 0.001f;
+	public float cursorMovement = 0.007f;
 
 	/**
 	 * Polls keyboard state and returns a resulting PlayerInput.

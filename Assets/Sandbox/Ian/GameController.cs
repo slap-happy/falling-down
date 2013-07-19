@@ -92,11 +92,6 @@ public class GameController : MonoBehaviour
 		Player.SetActive(true);
 		if (OnGameStarted != null)
 			OnGameStarted();
-
-		GameObject camera = GameObject.FindWithTag("MainCamera");
-		if (camera) {
-			camera.GetComponent<TrackingCamera>().target = Player.transform;
-		}
 	}
 	
 	void GameOver()

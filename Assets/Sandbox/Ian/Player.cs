@@ -10,7 +10,7 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Attributes
-	public float cursorDistance = 100f;
+	public float cursorLeadDistance = 100f;
 	public float cursorSpaceWidth = 50f;
 	public float minDrag;
 	public float maxDrag;
@@ -27,6 +27,11 @@ public class Player : MonoBehaviour
 	private Quaternion originalRotation;
 	
 	private State currentState = State.Normal;
+
+	/**
+	 * The active posture.
+	 */
+	private GameObject posture;
 	
 	private enum State {
 		Normal,
@@ -50,6 +55,8 @@ public class Player : MonoBehaviour
 			if (trackingCamera != null)
 				trackingCamera.SetTarget(cameraTargetRef);
 		}
+
+		posture = normal;
 	}
 	
 	void OnEnable()
@@ -93,25 +100,28 @@ public class Player : MonoBehaviour
 				break;
 		
 			case State.Normal:
+				SetPosture(normal);
+				break;
 			case State.Flare:
+				SetPosture(flare);
+				break;
 			case State.Dive:
-				SetPosture(currentState);
+				SetPosture(dive);
 				break;
 		}
 	}
 	
-	private void SetPosture(State state) {
-		bool doDive = false;
-		bool doFlare = false;
-		if (state == State.Dive) {
-			doDive = true;
-		} else if (state == State.Flare) {
-			doFlare = true;
-		} 		
-		
-		normal.SetActive(!doFlare && !doDive);
-		flare.SetActive(doFlare);
-		dive.SetActive(doDive);
+	private void SetPosture(GameObject newPosture) {
+		if (posture != newPosture) {
+			newPosture.transform.position = posture.transform.position;
+			newPosture.transform.rotation = posture.transform.rotation;
+
+			posture = newPosture;
+
+			normal.SetActive(normal == posture);
+			flare.SetActive(flare == posture);
+			dive.SetActive(dive == posture);
+		}
 	}
 	
 	private float totalRotation = 0;
@@ -121,7 +131,7 @@ public class Player : MonoBehaviour
 		float rotate = 360 * Time.deltaTime * 3;
 		totalRotation += rotate;
 		
-		SetPosture (State.Dive);
+		SetPosture(dive);
 		
 		if (currentState == State.RollLeft) {
 			dive.transform.Rotate(0, -rotate, 0);
@@ -173,16 +183,16 @@ public class Player : MonoBehaviour
 	void MoveTowardCursor() {
 		cursor = new Vector3(
 				inputWasReceived ? (currentInput.cursorPosition * cursorSpaceWidth) : cursor.x,
-				transform.position.y - cursorDistance,
-				transform.position.z
+				posture.transform.position.y - cursorLeadDistance,
+				posture.transform.position.z
 		);
 
-		Vector3 desiredPosition = new Vector3(cursor.x, transform.position.y, transform.position.z);
+		Vector3 desiredPosition = new Vector3(cursor.x, posture.transform.position.y, posture.transform.position.z);
 
-		transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 1f);
+		posture.transform.position = Vector3.Lerp(posture.transform.position, desiredPosition, Time.deltaTime * 1f);
 
-		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
-		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
+		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - posture.transform.position));
+		posture.transform.rotation = Quaternion.Slerp(posture.transform.rotation, rotation, Time.deltaTime * 15f);
 
 		// Apply a penalty force if rolling
 		if (inputWasReceived) {
