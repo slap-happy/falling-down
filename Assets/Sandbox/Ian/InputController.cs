@@ -94,8 +94,8 @@ public class InputController : MonoBehaviour
 	
 	void Update()
 	{
-		PollMouse(ref input);
-		PollTouches(ref input);
+//		PollMouse(ref input);
+//		PollTouches(ref input);
 		PollKeyboard(ref input);
 		input.CurrentAcceleration *= Time.deltaTime * inputMultiplier;
 		if (input.HasChanged && OnInput != null)

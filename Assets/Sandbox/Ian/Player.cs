@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
 	public GameObject dive;
 	public GameObject normal;
 	public GameObject flare;
+	public Transform cameraTargetRef;
 	#endregion
 	
 	private float rollForce = 40;
@@ -36,7 +37,21 @@ public class Player : MonoBehaviour
 		Dead
 	}
 	
+	private bool warningHit = false;
+	
 	#region Unity
+	void Awake()
+	{
+		instance = this;
+		
+		if (cameraTargetRef != null)
+		{
+			TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
+			if (trackingCamera != null)
+				trackingCamera.SetTarget(cameraTargetRef);
+		}
+	}
+	
 	void OnEnable()
 	{
 		GameController.OnGameStarted += HandleGameControllerOnGameStarted;
@@ -53,6 +68,15 @@ public class Player : MonoBehaviour
 	void OnDestroy()
 	{
 		PlayerInputController.OnInput -= HandleInputControllerOnInput;
+	}
+	
+	void OnGUI () {
+		if (warningHit == true) {
+			float width = 150;
+			float height = 25;
+			float left = (Screen.width / 2) - (width / 2);
+			GUI.Box(new Rect(left, 10, width, height), "Prepare for landing!");	
+		}
 	}
 	
 	void LateUpdate()
@@ -203,6 +227,28 @@ public class Player : MonoBehaviour
 				OnHitHazard(collision.relativeVelocity.y);
 		}
 	}
+	
+	void OnTriggerEnter(Collider other) {
+		if (other.transform.tag == "Warning Line") {
+			warningHit = true;
+		}
+		
+		if (other.transform.tag == "Finish Line") {
+			// Check speed
+			// if too fast, squish death
+			// If good speed, show popup cube with score. Freeze player position
+		}
+	}
+	#endregion
+	
+	#region Properties
+	public static Player Instance
+	{
+		get
+		{
+			return instance;
+		}
+	}
 	#endregion
 	
 	#region Handlers
@@ -225,6 +271,8 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Private
+	private static Player instance;
+	
 	private PlayerInput currentInput;
 	private PlayerInput previousInput;
 	private bool inputWasReceived;

@@ -17,6 +17,8 @@ public class GameController : MonoBehaviour
 	public float forceOfGravity;
 	public GameObject playerPrefab;
 	public Transform playerSpawnRef;
+	
+	public GameObject sceneCamera;
 	#endregion
 	
 	#region Properties
@@ -39,6 +41,8 @@ public class GameController : MonoBehaviour
 	void Awake()
 	{
 		Physics.gravity = new Vector3(0, -forceOfGravity, 0);
+//		if (sceneCamera != null)
+//			sceneCamera.SetActive(false);
 	}
 	
 	void OnGUI()
