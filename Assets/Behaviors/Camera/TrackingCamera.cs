@@ -5,6 +5,7 @@ public class TrackingCamera : MonoBehaviour
 {
 	#region Attributes
 	public bool lookAtTarget;
+	public float trackingSpeed = 0.5f;
 	#endregion
 	
 	#region Unity
@@ -35,7 +36,7 @@ public class TrackingCamera : MonoBehaviour
 		Vector3 targetPosition = transform.position;
 		targetPosition.y = target.position.y;
 		
-		transform.position = Vector3.SmoothDamp(ourPosition, targetPosition, ref currentVelocity, 0.5f);
+		transform.position = Vector3.SmoothDamp(ourPosition, targetPosition, ref currentVelocity, trackingSpeed);
 		
 		// experimental: causes the camera to pivot to face the target
 		if (lookAtTarget)
