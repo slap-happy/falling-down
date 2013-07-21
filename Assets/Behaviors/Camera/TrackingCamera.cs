@@ -75,7 +75,6 @@ public class TrackingCamera : MonoBehaviour
 		Vector3 placementPosition = new Vector3(currentPosition.x, target.position.y, currentPosition.z);
 		transform.position = placementPosition;
 		(cameraShake ?? (cameraShake = GetComponent<CameraShake>())).enabled = true;
-		cameraShake.enabled = true;
 	}
 	#endregion
 	

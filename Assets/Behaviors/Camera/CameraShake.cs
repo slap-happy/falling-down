@@ -39,7 +39,7 @@ public class CameraShake : MonoBehaviour
 	
 	void HandlePlayerOnHitHazard(float relativeVelocity)
 	{
-		Shake(relativeVelocity, 0.1f);
+		Shake(relativeVelocity, 0.2f);
 	}
 	#endregion
 	
