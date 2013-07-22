@@ -22,7 +22,6 @@ public class Player : MonoBehaviour
 	public Transform cameraTargetRef;
 	#endregion
 	
-	private float rollForce = 40;
 	private float rollPenaltyForce = 5;
 	
 	private Quaternion originalRotation;
@@ -201,10 +200,10 @@ public class Player : MonoBehaviour
 		if (inputWasReceived) {
 			switch (currentState) {
 				case State.RollLeft:
-					rigidbody.AddForce(new Vector3(-rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+					rigidbody.AddForce(new Vector3(0, rollPenaltyForce, 0), ForceMode.Impulse);
 					break;
 				case State.RollRight:
-					rigidbody.AddForce(new Vector3(rollForce, rollPenaltyForce, 0), ForceMode.Impulse);
+					rigidbody.AddForce(new Vector3(0, rollPenaltyForce, 0), ForceMode.Impulse);
 					break;
 			}
 		}
