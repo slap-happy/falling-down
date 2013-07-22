@@ -22,7 +22,10 @@ public class Player : MonoBehaviour
 	public Transform cameraTargetRef;
 	#endregion
 	
-	private float rollPenaltyForce = 5;
+	/**
+	 * Fraction of drag range that's applied when rolling.
+	 */
+	private float rollPenaltyFactor = 0.3f;
 	
 	private Quaternion originalRotation;
 	
@@ -159,12 +162,9 @@ public class Player : MonoBehaviour
 	
 	void FixedUpdate()
 	{
-		// Rolls are animated an can't be broken out of early
-		if (currentState != State.RollLeft && currentState != State.RollRight) {
-			MoveTowardCursor();
-			ApplyDrag();
-			PerformActions();
-		}
+		MoveTowardCursor();
+		ApplyDrag();
+		PerformActions();
 
 		if (terminalVelocity > 0 && rigidbody.velocity.y < -terminalVelocity)
 		{
@@ -195,26 +195,22 @@ public class Player : MonoBehaviour
 
 		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
 		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
-
-		// Apply a penalty force if rolling
-		if (inputWasReceived) {
-			switch (currentState) {
-				case State.RollLeft:
-					rigidbody.AddForce(new Vector3(0, rollPenaltyForce, 0), ForceMode.Impulse);
-					break;
-				case State.RollRight:
-					rigidbody.AddForce(new Vector3(0, rollPenaltyForce, 0), ForceMode.Impulse);
-					break;
-			}
-		}
 	}
 
 	/**
-	 * Adjusts drag according to input.
+	 * Adjusts drag according to input and current roll state.
 	 */
 	void ApplyDrag() {
-		float flare = inputWasReceived ? currentInput.flareMagnitude : 0;
-		rigidbody.drag = minDrag + ((maxDrag - minDrag) * flare);
+		float dragFactor = 0f;
+
+		if (isRolling) {
+			dragFactor = rollPenaltyFactor;
+		}
+		else if (inputWasReceived) {
+			dragFactor = currentInput.flareMagnitude;
+		}
+
+		rigidbody.drag = minDrag + ((maxDrag - minDrag) * dragFactor);
 	}
 
 	/**
@@ -261,13 +257,20 @@ public class Player : MonoBehaviour
 			return instance;
 		}
 	}
+
+	public bool isRolling {
+		get { return currentState == State.RollLeft || currentState == State.RollRight; }
+	}
 	#endregion
 	
 	#region Handlers
 	void HandleInputControllerOnInput (PlayerInput input)
 	{
-		currentInput = input;
-		inputWasReceived = true;
+		// Don't handle new input while we're rolling
+		if (!isRolling) {
+			currentInput = input;
+			inputWasReceived = true;
+		}
 	}
 
 	void HandleGameControllerOnGameStarted()
