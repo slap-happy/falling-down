@@ -167,10 +167,12 @@ public class Player : MonoBehaviour
 			PerformActions();
 		}
 
-		if (terminalVelocity > 0 && rigidbody.velocity.y > terminalVelocity)
+		if (terminalVelocity > 0 && rigidbody.velocity.y < -terminalVelocity)
 		{
+			if (Debug.isDebugBuild)
+				Debug.Log("Terminal velocity cap met.");
 			Vector3 newVelocity = rigidbody.velocity;
-			newVelocity.y = terminalVelocity;
+			newVelocity.y = -terminalVelocity;
 			rigidbody.velocity = newVelocity;
 		}
 

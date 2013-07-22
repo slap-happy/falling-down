@@ -7,23 +7,6 @@ public class CameraShake : CameraEffect
 	public float shakeRange;
 	#endregion
 	
-	#region Unity
-	void Awake()
-	{
-		effectType = CameraEffectType.Impact;
-	}
-	
-	void OnEnable()
-	{
-		GameController.OnGameEnded += HandleGameControllerOnGameEnded;
-	}
-	
-	void OnDisable()
-	{
-		GameController.OnGameEnded -= HandleGameControllerOnGameEnded;
-	}
-	#endregion
-	
 	#region Actions
 	public override void Play(CameraEffectArgs args)
 	{
@@ -31,21 +14,10 @@ public class CameraShake : CameraEffect
 	}
 	#endregion
 	
-	#region Handlers
-	void HandleGameControllerOnGameEnded()
-	{
-		enabled = false;
-	}
-	#endregion
-	
 	#region Private
 	private IEnumerator Shake(CameraEffectArgs args)
 	{
-		if (args.duration == 0)
-		{
-			DoShake(args.intensity);
-		}
-		else
+		if (args.duration > 0)
 		{
 			float endTime = Time.time + args.duration;
 			while (Time.time < endTime)
@@ -54,6 +26,8 @@ public class CameraShake : CameraEffect
 				yield return null;
 			}
 		}
+		else
+			DoShake(args.intensity);
 	}
 	
 	void DoShake(float intensity)

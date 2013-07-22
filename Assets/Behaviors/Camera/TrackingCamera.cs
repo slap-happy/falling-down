@@ -89,18 +89,16 @@ public class TrackingCamera : MonoBehaviour
 	
 	void HandlePlayerInputControllerOnInput (PlayerInput input)
 	{
-		EffectDelegate(new CameraEffectArgs
+		EffectDelegate(CameraEffectType.Speed, new CameraEffectArgs
 		{
-			effectType = CameraEffectType.Speed,
 			intensity = input.flareMagnitude,
 		});
 	}
 	
 	void HandlePlayerOnHitHazard(float relativeVelocity)
 	{
-		EffectDelegate(new CameraEffectArgs
+		EffectDelegate(CameraEffectType.Impact, new CameraEffectArgs
 		{
-			effectType = CameraEffectType.Impact,
 			intensity = relativeVelocity,
 			duration = 0.2f,
 		});
@@ -123,9 +121,8 @@ public class TrackingCamera : MonoBehaviour
 	private Vector3 currentVelocity;
 	private Transform target;
 	
-	void EffectDelegate(CameraEffectArgs args)
+	void EffectDelegate(CameraEffectType type, CameraEffectArgs args)
 	{
-		CameraEffectType type = args.effectType;
 		if (cameraEffects.ContainsKey(type))
 			foreach (CameraEffect effect in cameraEffects[type])
 				effect.Play(args);
