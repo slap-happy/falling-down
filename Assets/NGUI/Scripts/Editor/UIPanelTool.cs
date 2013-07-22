@@ -3,6 +3,8 @@
 // Copyright © 2011-2012 Tasharen Entertainment
 //----------------------------------------------
 
+#pragma warning disable 0618 
+
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;

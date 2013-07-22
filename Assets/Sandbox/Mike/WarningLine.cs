@@ -10,7 +10,7 @@ public class WarningLine : MonoBehaviour {
 		float rotationAmount = 360.0f;
 		
 		foreach (GameObject light in warningLights) {
-			light.transform.Rotate(rotationAmount * Time.deltaTime, 0, 0);
+			light.transform.Rotate(0, rotationAmount * Time.deltaTime, 0);
 		}
 	}
 }
