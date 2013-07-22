@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 
 public class Player : MonoBehaviour
@@ -53,7 +54,7 @@ public class Player : MonoBehaviour
 		{
 			TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
 			if (trackingCamera != null)
-				trackingCamera.SetTarget(cameraTargetRef);
+				trackingCamera.SetPlayer(this);
 		}
 
 		posture = normal;
@@ -183,16 +184,16 @@ public class Player : MonoBehaviour
 	void MoveTowardCursor() {
 		cursor = new Vector3(
 				inputWasReceived ? (currentInput.cursorPosition * cursorSpaceWidth) : cursor.x,
-				posture.transform.position.y - cursorLeadDistance,
-				posture.transform.position.z
+				transform.position.y - cursorLeadDistance,
+				transform.position.z
 		);
 
-		Vector3 desiredPosition = new Vector3(cursor.x, posture.transform.position.y, posture.transform.position.z);
+		Vector3 desiredPosition = new Vector3(cursor.x, transform.position.y, transform.position.z);
 
-		posture.transform.position = Vector3.Lerp(posture.transform.position, desiredPosition, Time.deltaTime * 1f);
+		transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 1f);
 
-		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - posture.transform.position));
-		posture.transform.rotation = Quaternion.Slerp(posture.transform.rotation, rotation, Time.deltaTime * 15f);
+		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
+		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
 
 		// Apply a penalty force if rolling
 		if (inputWasReceived) {
@@ -283,6 +284,7 @@ public class Player : MonoBehaviour
 	#region Private
 	private static Player instance;
 	
+	private Action<CameraEffectArgs> cameraEffectsDelegate;
 	private PlayerInput currentInput;
 	private PlayerInput previousInput;
 	private bool inputWasReceived;

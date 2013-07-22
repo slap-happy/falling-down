@@ -1,33 +1,33 @@
 using UnityEngine;
 using System.Collections;
 
-public class CameraShake : MonoBehaviour
+public class CameraShake : CameraEffect
 {
 	#region Attributes
 	public float shakeRange;
 	#endregion
 	
 	#region Unity
+	void Awake()
+	{
+		effectType = CameraEffectType.Impact;
+	}
+	
 	void OnEnable()
 	{
 		GameController.OnGameEnded += HandleGameControllerOnGameEnded;
-		Player.Instance.OnHitHazard += HandlePlayerOnHitHazard;
 	}
 	
 	void OnDisable()
 	{
 		GameController.OnGameEnded -= HandleGameControllerOnGameEnded;
-		Player.Instance.OnHitHazard -= HandlePlayerOnHitHazard;
 	}
 	#endregion
 	
 	#region Actions
-	public void Shake(float intensity, float duration)
+	public override void Play(CameraEffectArgs args)
 	{
-		if (duration == 0)
-			DoShake(intensity);
-		else
-			StartCoroutine(ShakeCoroutine(intensity, duration));
+		StartCoroutine(Shake(args));
 	}
 	#endregion
 	
@@ -36,21 +36,23 @@ public class CameraShake : MonoBehaviour
 	{
 		enabled = false;
 	}
-	
-	void HandlePlayerOnHitHazard(float relativeVelocity)
-	{
-		Shake(relativeVelocity, 0.2f);
-	}
 	#endregion
 	
 	#region Private
-	IEnumerator ShakeCoroutine(float intensity, float duration)
+	private IEnumerator Shake(CameraEffectArgs args)
 	{
-		float endTime = Time.time + duration;
-		while (Time.time < endTime)
+		if (args.duration == 0)
 		{
-			DoShake(intensity);
-			yield return null;
+			DoShake(args.intensity);
+		}
+		else
+		{
+			float endTime = Time.time + args.duration;
+			while (Time.time < endTime)
+			{
+				DoShake(args.intensity);
+				yield return null;
+			}
 		}
 	}
 	
