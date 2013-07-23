@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
 	
 	private Quaternion originalRotation;
 	
-	private State currentState = State.Normal;
+	private State currentState = State.Dive;
 
 	/**
 	 * The active posture.
@@ -141,7 +141,7 @@ public class Player : MonoBehaviour
 		
 		if (totalRotation >= 360) {
 			totalRotation = 0;
-			currentState = State.Normal;
+			currentState = State.Dive;
 			// Reset rotation in case he overrotated due to inexact math
 			dive.transform.rotation = originalRotation;
 			
@@ -225,6 +225,25 @@ public class Player : MonoBehaviour
 					originalRotation = dive.transform.rotation;
 					currentState = currentInput.cursorPosition > 0 ? State.RollRight : State.RollLeft;
 					break;
+
+				default:
+
+					if (inputWasReceived) {
+						if (currentInput.flareMagnitude > 0.7f) {
+							currentState = State.Flare;
+						}
+						else if (currentInput.flareMagnitude > 0.3f) {
+							currentState = State.Normal;
+						}
+						else {
+							currentState = State.Dive;
+						}
+					}
+					else {
+						currentState = State.Dive;
+					}
+
+					break;
 			}
 		}
 	}
@@ -283,6 +302,8 @@ public class Player : MonoBehaviour
 	{
 		rigidbody.velocity = Vector3.down * 15;
 		rigidbody.drag = minDrag;
+		currentInput = null;
+		inputWasReceived = false;
 	}
 	
 	void HandleGameControllerOnGameEnded()
