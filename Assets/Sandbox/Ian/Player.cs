@@ -11,8 +11,8 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Attributes
-	public float cursorLeadDistance = 100f;
-	public float cursorSpaceWidth = 50f;
+	public float rollBoost = 3f;
+	public float rollPenaltyFactor = 0.6f;
 	public float minDrag;
 	public float maxDrag;
 	public float terminalVelocity;
@@ -21,11 +21,6 @@ public class Player : MonoBehaviour
 	public GameObject flare;
 	public Transform cameraTargetRef;
 	#endregion
-	
-	/**
-	 * Fraction of drag range that's applied when rolling.
-	 */
-	private float rollPenaltyFactor = 0.3f;
 	
 	private Quaternion originalRotation;
 	
@@ -51,10 +46,11 @@ public class Player : MonoBehaviour
 	void Awake()
 	{
 		instance = this;
-		
+		camera = Camera.mainCamera;
+
 		if (cameraTargetRef != null)
 		{
-			TrackingCamera trackingCamera = Camera.mainCamera.GetComponent<TrackingCamera>();
+			TrackingCamera trackingCamera = camera.GetComponent<TrackingCamera>();
 			if (trackingCamera != null)
 				trackingCamera.SetPlayer(this);
 		}
@@ -183,15 +179,21 @@ public class Player : MonoBehaviour
 	 * is always calculated as a fixed distance beneath the player while falling.
 	 */
 	void MoveTowardCursor() {
-		cursor = new Vector3(
-				inputWasReceived ? (currentInput.cursorPosition * cursorSpaceWidth) : cursor.x,
-				transform.position.y - cursorLeadDistance,
-				transform.position.z
-		);
+		// Calculate new cursor position, relative to the camera screen and our
+		// current input
+		float midwidth = camera.pixelWidth / 2;
+		float relativeX = (currentInput == null) ? midwidth : (midwidth + (currentInput.cursorPosition * midwidth));
+		float cameraDistance = Mathf.Abs(camera.transform.position.z - transform.position.z);
+
+		cursor = camera.ScreenToWorldPoint(new Vector3(relativeX, 0, cameraDistance));
+
+		if (Debug.isDebugBuild) {
+			Debug.DrawLine(transform.position, cursor);
+		}
 
 		Vector3 desiredPosition = new Vector3(cursor.x, transform.position.y, transform.position.z);
 
-		transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 1f);
+		transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * boost);
 
 		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
 		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
@@ -261,6 +263,10 @@ public class Player : MonoBehaviour
 	public bool isRolling {
 		get { return currentState == State.RollLeft || currentState == State.RollRight; }
 	}
+
+	public float boost {
+		get { return isRolling ? rollBoost : 1; }
+	}
 	#endregion
 	
 	#region Handlers
@@ -293,5 +299,6 @@ public class Player : MonoBehaviour
 	private PlayerInput previousInput;
 	private bool inputWasReceived;
 	private Vector3 cursor;
+	private Camera camera;
 	#endregion
 }
