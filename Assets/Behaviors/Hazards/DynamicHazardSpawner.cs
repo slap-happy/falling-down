@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEditor;
 using System.Collections;
 
 [System.Serializable]
@@ -6,20 +7,23 @@ public struct DynamicHazardArgs
 {
 	public Vector3 toDirection;
 	public ForceMode forceMode;
-	public float force;
 }
 
 [RequireComponent(typeof(SphereCollider))]
 public class DynamicHazardSpawner : MonoBehaviour
 {
 	public enum SpawnCondition { OnTriggerEnter, OnTriggerExit, OnBecameVisible }
+	public enum ChooseTarget { DirectionRef, ClosestPlayer, FurthestPlayer }
+	
 	const string TO_DIRECTION_REF_NAME = "toDirectionRef";
 	
 	#region Attributes
-	public SpawnCondition spawnCondition = SpawnCondition.OnTriggerEnter;
+	[HideInInspector]
+	public Transform toDirectionRef;
+	
 	public Hazard hazardPrefab;
+	public SpawnCondition spawnCondition;
 	public ForceMode forceModeToUse;
-	public float forceToUse;
 	public float radius = 10;
 	#endregion
 	
@@ -65,6 +69,10 @@ public class DynamicHazardSpawner : MonoBehaviour
 	
 	void OnDrawGizmos()
 	{
+		Gizmos.color = Color.yellow;
+		float maxSize = 10;
+		float sphereSize = Vector3.Distance(transform.position, SceneView.currentDrawingSceneView.camera.transform.position) * 0.025f;
+		Gizmos.DrawSphere(transform.position, (sphereSize > maxSize ? maxSize : sphereSize));
 		Gizmos.color = Color.white;
 		Gizmos.DrawWireSphere(transform.position, radius);
 		if (toDirectionRef != null)
@@ -78,7 +86,6 @@ public class DynamicHazardSpawner : MonoBehaviour
 	#endregion
 	
 	#region Private
-	private Transform toDirectionRef;
 	private Hazard cachedHazard;
 	
 	void Activate()
@@ -87,7 +94,6 @@ public class DynamicHazardSpawner : MonoBehaviour
 		{
 			toDirection = toDirectionRef.position,
 			forceMode = forceModeToUse,
-			force = forceToUse,
 			
 		});
 		gameObject.SetActive(false);
