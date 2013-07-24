@@ -4,7 +4,7 @@ using UnityEngine;
  * A simple structure that represents player input.
  */
 public class PlayerInput {
-	public enum Action { None, Roll }
+	public enum Action { None, Roll, Brake }
 
 	/**
 	 * The action intended by this input.
