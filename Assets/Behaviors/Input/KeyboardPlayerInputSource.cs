@@ -16,7 +16,7 @@ public class KeyboardPlayerInputSource : PlayerInputSource {
 	/**
 	 * Delay limit for double taps.
 	 */
-	public float doubleTapSpeed = 0.5f;
+	public float doubleTapSpeed = 0.2f;
 
 	/**
 	 * Timestamps to keep track of doubletaps.
