@@ -11,6 +11,8 @@ public class Player : MonoBehaviour
 	#endregion
 	
 	#region Attributes
+	public float jetForce = 50f;
+	public float jetsAvailable = 3;
 	public float rollBoost = 3f;
 	public float rollPenaltyFactor = 0.6f;
 	public float minDrag;
@@ -24,7 +26,17 @@ public class Player : MonoBehaviour
 	
 	private Quaternion originalRotation;
 	
-	private State currentState = State.Normal;
+	/**
+	 * Our current state.
+	 */
+	private State currentState = State.Dive;
+
+	/**
+	 * Our current relaxed state, taking into account how quickly we're turning.
+	 */
+	private State currentRelaxedState {
+		get { return (cursor != null && Mathf.Abs(cursor.x - transform.position.x) > 15) ? State.Normal : State.Dive; }
+	}
 
 	/**
 	 * The active posture.
@@ -37,6 +49,7 @@ public class Player : MonoBehaviour
 		Flare,
 		RollLeft,
 		RollRight,
+		Braking,
 		Dead
 	}
 	
@@ -83,6 +96,8 @@ public class Player : MonoBehaviour
 			float left = (Screen.width / 2) - (width / 2);
 			GUI.Box(new Rect(left, 10, width, height), "Prepare for landing!");	
 		}
+
+		GUI.Label(new Rect(Screen.width - 85, 10, 75, 20), jetsAvailable + " jets left");
 	}
 	
 	void LateUpdate()
@@ -96,6 +111,10 @@ public class Player : MonoBehaviour
 			case State.RollLeft:
 			case State.RollRight:
 				BarrelRoll();
+				break;
+
+			case State.Braking:
+				Brake();
 				break;
 		
 			case State.Normal:
@@ -122,6 +141,18 @@ public class Player : MonoBehaviour
 			dive.SetActive(dive == posture);
 		}
 	}
+
+	private float brakingStart;
+
+	void Brake() {
+		if ((Time.time - brakingStart) > 2) {
+			currentState = currentRelaxedState;
+		}
+		else {
+			// TODO create a braking posture
+			SetPosture(flare);
+		}
+	}
 	
 	private float totalRotation = 0;
 	void BarrelRoll ()
@@ -133,17 +164,17 @@ public class Player : MonoBehaviour
 		SetPosture(dive);
 		
 		if (currentState == State.RollLeft) {
-			dive.transform.Rotate(0, -rotate, 0);
+			posture.transform.Rotate(0, -rotate, 0);
 		}
 		if (currentState == State.RollRight) {
-			dive.transform.Rotate(0, rotate, 0);
+			posture.transform.Rotate(0, rotate, 0);
 		}
 		
 		if (totalRotation >= 360) {
 			totalRotation = 0;
-			currentState = State.Normal;
+			currentState = currentRelaxedState;
 			// Reset rotation in case he overrotated due to inexact math
-			dive.transform.rotation = originalRotation;
+			posture.transform.rotation = originalRotation;
 			
 			// Mostly kill his sideways velocity.
 			Vector3 newVelocity = rigidbody.velocity;
@@ -159,6 +190,7 @@ public class Player : MonoBehaviour
 	void FixedUpdate()
 	{
 		MoveTowardCursor();
+		ApplyBrakes();
 		ApplyDrag();
 		PerformActions();
 
@@ -176,7 +208,8 @@ public class Player : MonoBehaviour
 
 	/**
 	 * Moves towards the virtual cursor according to player input. The cursor
-	 * is always calculated as a fixed distance beneath the player while falling.
+	 * is relative to the camera screen, at the bottom normally or at the top if
+	 * braking.
 	 */
 	void MoveTowardCursor() {
 		// Calculate new cursor position, relative to the camera screen and our
@@ -185,7 +218,7 @@ public class Player : MonoBehaviour
 		float relativeX = (currentInput == null) ? midwidth : (midwidth + (currentInput.cursorPosition * midwidth));
 		float cameraDistance = Mathf.Abs(camera.transform.position.z - transform.position.z);
 
-		cursor = camera.ScreenToWorldPoint(new Vector3(relativeX, 0, cameraDistance));
+		cursor = camera.ScreenToWorldPoint(new Vector3(relativeX, isBraking ? camera.pixelHeight : 0, cameraDistance));
 
 		if (Debug.isDebugBuild) {
 			Debug.DrawLine(transform.position, cursor);
@@ -197,6 +230,15 @@ public class Player : MonoBehaviour
 
 		Quaternion rotation = Quaternion.LookRotation(Vector3.forward, -1 * (cursor - transform.position));
 		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 15f);
+	}
+
+	/**
+	 * Applies braking force.
+	 */
+	void ApplyBrakes() {
+		if (isBraking) {
+			rigidbody.AddForce(posture.transform.up * jetForce, ForceMode.Acceleration);
+		}
 	}
 
 	/**
@@ -216,14 +258,41 @@ public class Player : MonoBehaviour
 	}
 
 	/**
-	 * Handles any inputed actions.
+	 * Handles any input actions and adjusts player state.
 	 */
 	void PerformActions() {
 		if (inputWasReceived) {
 			switch (currentInput.action) {
+				case PlayerInput.Action.Brake:
+					if (jetsAvailable > 0) {
+						jetsAvailable--;
+						brakingStart = Time.time;
+						currentState = State.Braking;
+					}
+					break;
+
 				case PlayerInput.Action.Roll:
-					originalRotation = dive.transform.rotation;
+					originalRotation = posture.transform.rotation;
 					currentState = currentInput.cursorPosition > 0 ? State.RollRight : State.RollLeft;
+					break;
+
+				default:
+
+					if (inputWasReceived) {
+						if (currentInput.flareMagnitude > 0.7f) {
+							currentState = State.Flare;
+						}
+						else if (currentInput.flareMagnitude > 0.3f) {
+							currentState = State.Normal;
+						}
+						else {
+							currentState = currentRelaxedState;
+						}
+					}
+					else {
+						currentState = currentRelaxedState;
+					}
+
 					break;
 			}
 		}
@@ -260,6 +329,10 @@ public class Player : MonoBehaviour
 		}
 	}
 
+	public bool isBraking {
+		get { return currentState == State.Braking; }
+	}
+
 	public bool isRolling {
 		get { return currentState == State.RollLeft || currentState == State.RollRight; }
 	}
@@ -272,8 +345,8 @@ public class Player : MonoBehaviour
 	#region Handlers
 	void HandleInputControllerOnInput (PlayerInput input)
 	{
-		// Don't handle new input while we're rolling
-		if (!isRolling) {
+		// Don't handle new input while we're rolling or braking
+		if (!(isRolling || isBraking)) {
 			currentInput = input;
 			inputWasReceived = true;
 		}
@@ -283,6 +356,8 @@ public class Player : MonoBehaviour
 	{
 		rigidbody.velocity = Vector3.down * 15;
 		rigidbody.drag = minDrag;
+		currentInput = null;
+		inputWasReceived = false;
 	}
 	
 	void HandleGameControllerOnGameEnded()
