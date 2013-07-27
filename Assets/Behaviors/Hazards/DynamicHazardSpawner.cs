@@ -13,12 +13,12 @@ public struct DynamicHazardArgs
 public class DynamicHazardSpawner : MonoBehaviour
 {
 	public enum SpawnCondition { OnTriggerEnter, OnTriggerExit, OnBecameVisible }
-	public enum ChooseTarget { DirectionRef, ClosestPlayer, FurthestPlayer }
+	public enum TargetType { DirectionRef, ClosestPlayer, FurthestPlayer }
 	
 	const string TO_DIRECTION_REF_NAME = "toDirectionRef";
 	
 	#region Attributes
-	[HideInInspector]
+	[HideInInspector]	// We leave this public so that Unity will serialize it's value to the inspector.
 	public Transform toDirectionRef;
 	
 	public Hazard hazardPrefab;
