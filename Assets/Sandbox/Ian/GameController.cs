@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameController : MonoBehaviour
 {
-	enum GameState { Waiting, Running }
+	enum GameState { Connecting, Waiting, Running }
 	
 	#region Events
 	public delegate void GameStarted();
@@ -41,6 +41,11 @@ public class GameController : MonoBehaviour
 	void Awake()
 	{
 		Physics.gravity = new Vector3(0, -forceOfGravity, 0);
+		network = GetComponent<NetworkController>();
+
+		if (network != null) {
+			network.gameType = Debug.isDebugBuild ? "Falling Down Development" : "Falling Down";
+		}
 	}
 	
 	void OnGUI()
@@ -61,21 +66,45 @@ public class GameController : MonoBehaviour
 				break;
 			}
 		}
+
 		GUILayout.BeginVertical();
-		{
-			if (gameState == GameState.Waiting)
-			{
+
+		switch (gameState) {
+			case GameState.Connecting:
+				if (network == null) {
+					gameState = GameState.Waiting;
+					GUILayout.Space(5);
+				}
+				else {
+					if (GUILayout.Button("Host Game") || returnKeyWentDown) {
+						HostGame();
+					}
+
+					GUILayout.Space(5);
+
+					foreach (HostData server in network.servers) {
+						if (GUILayout.Button("Join " + server.gameName + " (" + server.connectedPlayers + ")")) {
+							JoinGame(server);
+						}
+					}
+				}
+				break;
+
+			case GameState.Waiting:
 				if (GUILayout.Button("Start") || returnKeyWentDown)
 					GameStart();
-			}
-			else
-			{
+
+				break;
+			default:
 				if (GUILayout.Button("Restart") || returnKeyWentDown)
 					Restart();
+
 				GUILayout.Space(5);
+
 				if (GUILayout.Button("Finish") || escapeKeyWentDown)
 					GameOver();
-			}
+
+				break;
 		}
 	}
 	#endregion
@@ -83,7 +112,18 @@ public class GameController : MonoBehaviour
 	#region Private
 	private GameState gameState;
 	private GameObject player;
-	
+	private NetworkController network;
+
+	void HostGame() {
+		network.Host();
+		gameState = GameState.Waiting;
+	}
+
+	void JoinGame(HostData server) {
+		network.Join(server);
+		gameState = GameState.Waiting;
+	}
+
 	void GameStart()
 	{
 		gameState = GameState.Running;
