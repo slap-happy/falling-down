@@ -12,6 +12,7 @@ public class Player : MonoBehaviour
 	
 	#region Attributes
 	public float jetForce = 50f;
+	public float jetDuration = 2;
 	public float jetsAvailable = 3;
 	public float rollBoost = 3f;
 	public float rollPenaltyFactor = 0.6f;
@@ -112,11 +113,9 @@ public class Player : MonoBehaviour
 			case State.RollRight:
 				BarrelRoll();
 				break;
-
 			case State.Braking:
 				Brake();
 				break;
-		
 			case State.Normal:
 				SetPosture(normal);
 				break;
@@ -142,10 +141,10 @@ public class Player : MonoBehaviour
 		}
 	}
 
-	private float brakingStart;
-
 	void Brake() {
-		if ((Time.time - brakingStart) > 2) {
+		bool brakeWasCanceled = !inputWasReceived || (inputWasReceived && (currentInput.action != PlayerInput.Action.Brake));
+
+		if (brakeWasCanceled || (Time.time - brakingStart) >= jetDuration) {
 			currentState = currentRelaxedState;
 		}
 		else {
@@ -186,7 +185,7 @@ public class Player : MonoBehaviour
 			rigidbody.velocity = newVelocity;
 		}
 	}
-	
+
 	void FixedUpdate()
 	{
 		MoveTowardCursor();
@@ -264,7 +263,7 @@ public class Player : MonoBehaviour
 		if (inputWasReceived) {
 			switch (currentInput.action) {
 				case PlayerInput.Action.Brake:
-					if (jetsAvailable > 0) {
+					if (!isBraking && jetsAvailable > 0) {
 						jetsAvailable--;
 						brakingStart = Time.time;
 						currentState = State.Braking;
@@ -311,7 +310,7 @@ public class Player : MonoBehaviour
 		if (other.transform.tag == "Warning Line") {
 			warningHit = true;
 		}
-		
+
 		if (other.transform.tag == "Finish Line") {
 			// Check speed
 			// if too fast, squish death
@@ -345,8 +344,8 @@ public class Player : MonoBehaviour
 	#region Handlers
 	void HandleInputControllerOnInput (PlayerInput input)
 	{
-		// Don't handle new input while we're rolling or braking
-		if (!(isRolling || isBraking)) {
+		// Don't handle new input at all while we're rolling
+		if (!isRolling) {
 			currentInput = input;
 			inputWasReceived = true;
 		}
@@ -375,5 +374,6 @@ public class Player : MonoBehaviour
 	private bool inputWasReceived;
 	private Vector3 cursor;
 	private Camera camera;
+	private float brakingStart;
 	#endregion
 }

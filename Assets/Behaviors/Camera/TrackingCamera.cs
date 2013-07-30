@@ -9,6 +9,7 @@ public class TrackingCamera : MonoBehaviour
 	public bool lookAtTarget;
 	public float trackingSpeed = 0.5f;
 	public bool lockHorizontal;
+	public float leadInSeconds = 0;
 	#endregion
 	
 	#region Unity
@@ -40,7 +41,7 @@ public class TrackingCamera : MonoBehaviour
 	void FixedUpdate()
 	{
 		Vector3 ourPosition = transform.position;
-		Vector3 targetPosition = Target.position;
+		Vector3 targetPosition = Target.position + (leadInSeconds * Target.rigidbody.velocity);
 		targetPosition.z = startingPosition.z;
 		if (lockHorizontal)
 			targetPosition.x = startingPosition.x;

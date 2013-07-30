@@ -2,41 +2,48 @@ using UnityEngine;
 using System;
 
 public class PlayerTouches {
+	public enum Region { Top, Bottom };
+
 	public int count {
 		get { return _count; }
 	}
 
 	/**
-	 * Whether there was an upwards swipe.
+	 * Was there a touch that constitutes a swipe?
 	 */
-	public bool hasSwipe {
+	public bool swiped {
 		get {
-			if (_count > 1) {
-				return touches[1].deltaPosition.y > swipeThreshold;
-			}
-			else if (_count > 0) {
-				return touches[0].deltaPosition.y > swipeThreshold;
-			}
-			else {
-				return false;
-			}
+			for (int i = 0; i > 1; i++)
+				if (_count > i)
+					return touches[i].deltaPosition.y > swipeThreshold;
+
+			return false;
 		}
 	}
 
 	/**
 	 * Position of a single touch or the midpoint between two touches.
 	 */
-	public float position {
+	public Vector2 position {
 		get {
 			if (_count > 1) {
-				return (touches[0].position.x + touches[1].position.x) / 2;
+				return (touches[0].position + touches[1].position) / 2;
 			}
 			else if (_count > 0) {
-				return touches[0].position.x;
+				return touches[0].position;
 			}
 			else {
-				return 0;
+				return new Vector2(0, 0);
 			}
+		}
+	}
+
+	/**
+	 * Region of the screen where the touch position is.
+	 */
+	public Region region {
+		get {
+			return (position.y > (Screen.height / 2)) ? Region.Top : Region.Bottom;
 		}
 	}
 
@@ -45,14 +52,14 @@ public class PlayerTouches {
 	 * touch relative to the total screen width.
 	 */
 	public float relativePosition {
-		get { return (position - (Screen.width / 2)) / Screen.width; }
+		get { return (position.x - (Screen.width / 2)) / Screen.width; }
 	}
 
 	/**
 	 * Spread factor of two touches.
 	 */
 	public float spread {
-		get { return (_count > 1) ? Math.Abs(touches[0].position.x - touches[1].position.x) / Screen.width : 0; }
+		get { return (_count > 1) ? (touches[0].position - touches[1].position).magnitude / Screen.width : 0; }
 	}
 
 	private Touch[] touches;
@@ -102,7 +109,7 @@ public class TouchPlayerInputSource : PlayerInputSource {
 			return new PlayerInput(
 				touches.relativePosition,
 				touches.spread,
-				touches.hasSwipe ? PlayerInput.Action.Brake : PlayerInput.Action.None
+				(touches.region == PlayerTouches.Region.Top) ? PlayerInput.Action.Brake : PlayerInput.Action.None
 			);
 		}
 	}

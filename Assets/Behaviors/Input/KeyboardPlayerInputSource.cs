@@ -23,7 +23,6 @@ public class KeyboardPlayerInputSource : PlayerInputSource {
 	 */
 	private float lastTapTimeLeft = 0;
 	private float lastTapTimeRight = 0;
-	private float lastTapTimeUp = 0;
 
 	/**
 	 * Polls keyboard state and returns a resulting PlayerInput.
@@ -49,12 +48,9 @@ public class KeyboardPlayerInputSource : PlayerInputSource {
 
 			lastTapTimeRight = Time.time;
 		}
-		else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-			if ((Time.time - lastTapTimeUp) < doubleTapSpeed) {
-				action = PlayerInput.Action.Brake;
-			}
 
-			lastTapTimeUp = Time.time;
+		if (Input.GetKey(KeyCode.Space)) {
+			action = PlayerInput.Action.Brake;
 		}
 
 		// Immediately move left or right of center a ways when starting a roll
