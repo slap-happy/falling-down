@@ -24,20 +24,7 @@ public class GameController : MonoBehaviour
 	#endregion
 	
 	#region Properties
-	public GameObject player {
-		get {
-			if (_player == null) {
-				_player = GameObject.FindWithTag("Player");
-
-				if (_player == null) {
-					_player = Instantiate(playerPrefab, playerSpawnRef);
-				}
-			}
-
-			return _player;
-		}
-	}
-	private GameObject _player;
+	public GameObject player { get; private set; }
 	
 	public bool isHosting {
 		get { return (network != null) && network.isHosting; }
@@ -136,7 +123,10 @@ public class GameController : MonoBehaviour
 	private NetworkController network;
 
 	void ReadyPlayer() {
-		player.SetActive(false);
+		if (player == null) {
+			player = Instantiate(playerPrefab, playerSpawnRef);
+			player.SetActive(false);
+		}
 	}
 
 	void HostGame() {
@@ -151,7 +141,6 @@ public class GameController : MonoBehaviour
 
 	void GameStart() {
 		ReadyPlayer();
-		gameState = GameState.Running;
 		networkView.RPC("NotifyGameStarted", RPCMode.All);
 	}
 
@@ -171,6 +160,7 @@ public class GameController : MonoBehaviour
 
 	[RPC]
 	void NotifyGameStarted() {
+		gameState = GameState.Running;
 		if (OnGameStarted != null)
 			OnGameStarted();
 	}
