@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof(NetworkView))]
+
 public class GameController : MonoBehaviour
 {
 	enum GameState { Connecting, Waiting, Running }
@@ -22,24 +24,37 @@ public class GameController : MonoBehaviour
 	#endregion
 	
 	#region Properties
-	public GameObject Player
-	{
-		get
-		{
-			if (player == null) {
-				player = GameObject.FindWithTag("Player");
+	public GameObject player {
+		get {
+			if (_player == null) {
+				_player = GameObject.FindWithTag("Player");
 
-				if (player == null)
-					player = GameObject.Instantiate(playerPrefab, playerSpawnRef.position, playerSpawnRef.rotation) as GameObject;
+				if (_player == null) {
+					_player = Instantiate(playerPrefab, playerSpawnRef);
+				}
 			}
-			return player;
+
+			return _player;
 		}
 	}
-	#endregion
+	private GameObject _player;
 	
+	public bool isHosting {
+		get { return (network != null) && network.isHosting; }
+	}
+	#endregion
+
+	public GameObject Instantiate(GameObject prefab, Transform spawnRef) {
+		if (network == null) {
+			return GameObject.Instantiate(prefab, spawnRef.position, spawnRef.rotation) as GameObject;
+		}
+		else {
+			return Network.Instantiate(prefab, spawnRef.position, spawnRef.rotation, 0) as GameObject;
+		}
+	}
+
 	#region Unity
-	void Awake()
-	{
+	void Awake() {
 		Physics.gravity = new Vector3(0, -forceOfGravity, 0);
 		network = GetComponent<NetworkController>();
 
@@ -47,17 +62,24 @@ public class GameController : MonoBehaviour
 			network.gameType = Debug.isDebugBuild ? "Falling Down Development" : "Falling Down";
 		}
 	}
+
+	void OnConnectedToServer() {
+		ReadyPlayer();
+	}
+
+	void OnPlayerConnected() {
+		if (gameState == GameState.Waiting) {
+			ReadyPlayer();
+		}
+	}
 	
-	void OnGUI()
-	{
+	void OnGUI() {
 		bool returnKeyWentDown = false;
 		bool escapeKeyWentDown = false;
 		
 		Event e = Event.current;
-		if (e.type == EventType.KeyDown)
-		{
-			switch (e.keyCode)
-			{
+		if (e.type == EventType.KeyDown) {
+			switch (e.keyCode) {
 			case KeyCode.Return:
 				returnKeyWentDown = true;
 				break;
@@ -91,17 +113,17 @@ public class GameController : MonoBehaviour
 				break;
 
 			case GameState.Waiting:
-				if (GUILayout.Button("Start") || returnKeyWentDown)
+				if (isHosting && (GUILayout.Button("Start") || returnKeyWentDown))
 					GameStart();
 
 				break;
 			default:
-				if (GUILayout.Button("Restart") || returnKeyWentDown)
+				if (isHosting && (GUILayout.Button("Restart") || returnKeyWentDown))
 					Restart();
 
 				GUILayout.Space(5);
 
-				if (GUILayout.Button("Finish") || escapeKeyWentDown)
+				if (isHosting && (GUILayout.Button("Finish") || escapeKeyWentDown))
 					GameOver();
 
 				break;
@@ -111,8 +133,11 @@ public class GameController : MonoBehaviour
 	
 	#region Private
 	private GameState gameState;
-	private GameObject player;
 	private NetworkController network;
+
+	void ReadyPlayer() {
+		player.SetActive(false);
+	}
 
 	void HostGame() {
 		network.Host();
@@ -124,28 +149,30 @@ public class GameController : MonoBehaviour
 		gameState = GameState.Waiting;
 	}
 
-	void GameStart()
-	{
+	void GameStart() {
+		ReadyPlayer();
 		gameState = GameState.Running;
-		Player.SetActive(true);
-		if (OnGameStarted != null)
-			OnGameStarted();
+		networkView.RPC("NotifyGameStarted", RPCMode.All);
 	}
-	
-	void GameOver()
-	{
+
+	void GameOver() {
 		gameState = GameState.Waiting;
-		Player.SetActive(false);
+		player.SetActive(false);
 		Restart();
 		if (OnGameEnded != null)
 			OnGameEnded();
 	}
 	
-	void Restart()
-	{
-		Player.transform.position = playerSpawnRef.position;
-		Player.transform.rotation = playerSpawnRef.rotation;
+	void Restart() {
+		player.transform.position = playerSpawnRef.position;
+		player.transform.rotation = playerSpawnRef.rotation;
 		GameStart();
+	}
+
+	[RPC]
+	void NotifyGameStarted() {
+		if (OnGameStarted != null)
+			OnGameStarted();
 	}
 	#endregion
 }

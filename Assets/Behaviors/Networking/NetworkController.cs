@@ -20,6 +20,7 @@ public class NetworkController : MonoBehaviour {
 	 */
 	public float pollInterval = 10f;
 	private float nextPoll = 0f;
+	private float nextCheck = 0f;
 
 	/**
 	 * Game type used to advertise network servers.
@@ -32,14 +33,28 @@ public class NetworkController : MonoBehaviour {
 	public string gameName;
 
 	/**
+	 * Whether or not this is the network server.
+	 */
+	public bool isHosting {
+		get { return _isHosting; }
+	}
+	private bool _isHosting = false;
+
+	/**
 	 * Existing server hosts that we can connect to.
 	 */
 	public HostData[] servers {
 		get {
 			if (_servers == null || Time.time > nextPoll) {
 				nextPoll = Time.time + pollInterval;
-				MasterServer.ClearHostList();
+				Debug.Log("polling for registered servers of " + gameType);
+				MasterServer.RequestHostList(gameType);
+			}
+
+			if (_servers == null || Time.time > nextCheck) {
+				nextCheck = Time.time + 1;
 				_servers = MasterServer.PollHostList();
+				Debug.Log("found " + _servers.Length + " servers");
 			}
 
 			return _servers;
@@ -63,6 +78,7 @@ public class NetworkController : MonoBehaviour {
 		}
 
 		MasterServer.RegisterHost(gameType, gameName);
+		_isHosting = true;
 
 		return true;
 	}
