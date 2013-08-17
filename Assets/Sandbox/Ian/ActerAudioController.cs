@@ -6,6 +6,7 @@ public class ActerAudioController : MonoBehaviour
 {
 	#region Attributes
 	public AudioClip splatSound;
+	public Player player;
 	
 	public float playSplatSoundVelocityDelta;
 	#endregion
@@ -13,7 +14,6 @@ public class ActerAudioController : MonoBehaviour
 	#region Unity
 	void Awake()
 	{
-		player = GetComponent<Player>();
 		player.OnHitHazard += HandlePlayerOnHitHazard;
 	}
 	#endregion
@@ -27,9 +27,5 @@ public class ActerAudioController : MonoBehaviour
 			audio.PlayOneShot(splatSound);
 		}
 	}
-	#endregion
-	
-	#region Private
-	private Player player;
 	#endregion
 }

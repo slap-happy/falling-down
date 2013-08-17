@@ -41,7 +41,11 @@ public class Player : MonoBehaviour
 					trackingCamera.SetPlayer(this);
 			}
 		}
+		
+		splatter = GetComponentInChildren<Splatter>();
 	}
+	
+	private Renderer[] childRenderers;
 	
 	void OnDestroy() {
 		GameController.OnGameStarted -= HandleGameControllerOnGameStarted;
@@ -214,8 +218,11 @@ public class Player : MonoBehaviour
 	void OnCollisionEnter(Collision collision) {
 		if (collision.transform.tag == "Hazard")
 		{
+			float relativeVelocity = collision.relativeVelocity.y;
+			if (splatter != null)
+				splatter.Splat(Splatter.Type.Blood, relativeVelocity);
 			if (OnHitHazard != null)
-				OnHitHazard(collision.relativeVelocity.y);
+				OnHitHazard(relativeVelocity);
 		}
 	}
 	
@@ -279,11 +286,12 @@ public class Player : MonoBehaviour
 		}
 	}
 
-	void HandleGameControllerOnGameStarted() {
+	void HandleGameControllerOnGameStarted()
+	{
 		gameObject.SetActive(true);
 
 		PlayerInputController.OnInput += HandleInputControllerOnInput;
-
+		
 		rigidbody.velocity = Vector3.down * 15;
 		rigidbody.drag = minDrag;
 		currentInput = null;
@@ -295,6 +303,14 @@ public class Player : MonoBehaviour
 	}
 	#endregion
 	
+	#region Actions
+	public void Kill()
+	{
+		// TODO: Implement killing player
+		Debug.LogWarning("TODO: Implement killing player");
+	}
+	#endregion
+	
 	#region Private
 	private Faller character;
 	private Action<CameraEffectArgs> cameraEffectsDelegate;
@@ -302,9 +318,10 @@ public class Player : MonoBehaviour
 	private PlayerInput previousInput;
 	private bool inputWasReceived;
 	private Vector3 cursor;
-	private Camera camera;
+	private new Camera camera;
 	private float brakingStart;
 	private bool warningHit = false;
+	private Splatter splatter;
 
 	private float boost {
 		get { return character.isRolling ? rollBoost : 1; }
