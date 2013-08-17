@@ -4,9 +4,12 @@ using System.Collections;
 public class ParticleEmitterDriver : MonoBehaviour
 {
 	public enum WhenToEmit { Awake, OnEnable, Manual }
+	public enum WhenToDestroy { OffScreen, Timed }
 	#region Attributes
 	public WhenToEmit whenToEmit;
+	public WhenToDestroy whenToDestroy;
 	public int quantityToEmit;
+	public float duration;
 	#endregion
 	
 	#region Unity
@@ -23,6 +26,12 @@ public class ParticleEmitterDriver : MonoBehaviour
 		if (whenToEmit == WhenToEmit.OnEnable)
 			Emit(quantityToEmit);
 	}
+	
+	void OnBecameInvisible()
+	{
+		if (whenToDestroy == WhenToDestroy.OffScreen)
+			StopEmitting();
+	}
 	#endregion
 	
 	#region Private
@@ -38,7 +47,14 @@ public class ParticleEmitterDriver : MonoBehaviour
 		else
 		{
 			emitter.Emit(quantity);
+			if (whenToDestroy == WhenToDestroy.Timed)
+				Invoke("StopEmitting", duration);
 		}
+	}
+	
+	void StopEmitting()
+	{
+		SpawnPool.Instance.Destroy(gameObject);
 	}
 	#endregion
 }

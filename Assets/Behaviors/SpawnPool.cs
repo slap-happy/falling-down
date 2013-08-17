@@ -94,9 +94,7 @@ public class SpawnPool : SingletonMonobehaviour<SpawnPool>
 	
 		// If there's no cache for this prefab type, just instantiate normally
 		if (cache == null)
-		{
 			return Instantiate (prefab, position, rotation) as GameObject;
-		}
 	
 		// Find the next object in the cache
 		GameObject obj = cache.GetNextObjectInCache ();

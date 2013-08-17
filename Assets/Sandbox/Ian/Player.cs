@@ -41,8 +41,6 @@ public class Player : MonoBehaviour
 					trackingCamera.SetPlayer(this);
 			}
 		}
-		
-		splatter = GetComponentInChildren<Splatter>();
 	}
 	
 	private Renderer[] childRenderers;
@@ -218,9 +216,10 @@ public class Player : MonoBehaviour
 	void OnCollisionEnter(Collision collision) {
 		if (collision.transform.tag == "Hazard")
 		{
+			// splatter effect
+			SpawnPool.Instance.Spawn(Resources.Load("BloodSplatter") as GameObject, transform.position, Quaternion.identity);
+			
 			float relativeVelocity = collision.relativeVelocity.y;
-			if (splatter != null)
-				splatter.Splat(Splatter.Type.BloodSplatter);
 			if (OnHitHazard != null)
 				OnHitHazard(relativeVelocity);
 		}
@@ -321,7 +320,6 @@ public class Player : MonoBehaviour
 	private new Camera camera;
 	private float brakingStart;
 	private bool warningHit = false;
-	private Splatter splatter;
 
 	private float boost {
 		get { return character.isRolling ? rollBoost : 1; }
