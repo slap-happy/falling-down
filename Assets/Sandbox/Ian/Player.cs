@@ -220,7 +220,7 @@ public class Player : MonoBehaviour
 		{
 			float relativeVelocity = collision.relativeVelocity.y;
 			if (splatter != null)
-				splatter.Splat(Splatter.Type.Blood, relativeVelocity);
+				splatter.Splat(Splatter.Type.BloodSplatter);
 			if (OnHitHazard != null)
 				OnHitHazard(relativeVelocity);
 		}
