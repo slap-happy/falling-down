@@ -58,8 +58,12 @@ public class Player : MonoBehaviour
 			float left = (Screen.width / 2) - (width / 2);
 			GUI.Box(new Rect(left, 10, width, height), "Prepare for landing!");	
 		}
-
+		
+		// show available jets
 		GUI.Label(new Rect(Screen.width - 85, 10, 75, 20), jetsAvailable + " jets left");
+		
+		// show current speed
+		GUI.Label(new Rect(85, 10, 120, 20), string.Format("Speed: {0}", -rigidbody.velocity.y));
 	}
 
 	/**

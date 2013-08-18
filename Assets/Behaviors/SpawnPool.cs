@@ -118,6 +118,6 @@ public class SpawnPool : SingletonMonobehaviour<SpawnPool>
 			activeCachedObjects[objectToDestroy] = false;
 		}
 		else
-			Destroy(objectToDestroy);
+			GameObject.Destroy(objectToDestroy);
 	}
 }

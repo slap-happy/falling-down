@@ -15,7 +15,7 @@ public class SingletonMonobehaviour<T> : MonoBehaviour where T : SingletonMonobe
 				
 				if (instance == null)
 				{
-					Debug.LogWarning(string.Format("No instance of {0} found; created a temporary one."));
+					Debug.LogWarning(string.Format("No instance of {0} found; created a temporary one.", typeof(T).Name));
 					string rootName = string.Format("Root_{0}", Application.loadedLevelName);
 					GameObject root = GameObject.Find(rootName);
 					if (root == null)

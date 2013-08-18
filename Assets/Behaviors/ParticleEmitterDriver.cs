@@ -10,6 +10,8 @@ public class ParticleEmitterDriver : MonoBehaviour
 	public WhenToDestroy whenToDestroy;
 	public int quantityToEmit;
 	public float duration;
+	public bool useSpawnPool;
+	public GameObject rootGameObject;
 	#endregion
 	
 	#region Unity
@@ -54,7 +56,9 @@ public class ParticleEmitterDriver : MonoBehaviour
 	
 	void StopEmitting()
 	{
-		SpawnPool.Instance.Destroy(gameObject);
+		if (useSpawnPool)
+			SpawnPool.Instance.Destroy(rootGameObject ?? gameObject);
+		else Destroy(rootGameObject ?? gameObject);
 	}
 	#endregion
 }

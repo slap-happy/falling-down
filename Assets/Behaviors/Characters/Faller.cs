@@ -140,7 +140,7 @@ public class Faller : MonoBehaviour {
 	}
 
 	void DebugState(State state) {
-		Debug.Log("state changed to " + state);
+//		Debug.Log("state changed to " + state);
 	}
 
 	short PostureToId(GameObject posture) {
