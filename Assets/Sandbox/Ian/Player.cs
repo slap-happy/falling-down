@@ -221,7 +221,7 @@ public class Player : MonoBehaviour
 		if (collision.transform.tag == "Hazard")
 		{
 			// splatter effect
-			SpawnPool.Instance.Spawn(Resources.Load("BloodSplatter") as GameObject, transform.position, Quaternion.identity);
+//			SpawnPool.Instance.Spawn(Resources.Load("BloodSplatter") as GameObject, transform.position, Quaternion.identity);
 			
 			float relativeVelocity = collision.relativeVelocity.y;
 			if (OnHitHazard != null)
